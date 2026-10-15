@@ -25,7 +25,7 @@ import { iconElement } from "../resources/icons/index.js";
  */
 
 const NEW_ISSUE_URL =
-  "https://github.com/EnesSakalliUniWien/Quirk/issues/new?title=";
+  "https://github.com/EnesSakalliUniWien/Quirk-Bench/issues/new?title=";
 
 /**
  * How long a fresh banner survives circuit changes. The change that *caused* a recovery (like a

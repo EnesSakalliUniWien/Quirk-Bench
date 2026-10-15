@@ -13,10 +13,8 @@ Each browser suite builds its own `out/`, so do not run build commands concurren
   React Hooks dependency checks and the ESLint community `jsx-a11y-x` recommended rules are
   enforced. A few documented accessibility exceptions cover native keyboard scrolling and
   event delegation from already accessible controls; runtime axe and keyboard tests cover them.
-  Historical `doc/reviews/` evidence scripts are archived and excluded from lint.
 - `npm run format -- path/to/file` formats selected files with Prettier. `npm run format:check`
-  checks the active tree. Generated output, dependency lockfiles, patches, archived review/planning
-  evidence, and local agent metadata are excluded.
+  checks the active tree. Generated output, dependency lockfiles, and patches are excluded.
 - `npm run typecheck` checks `jsconfig.types.json`: stored-take schemas, JSON size accounting,
   file limits, idle scheduling, random-format metadata, and generic shared value stores.
   The checker follows these modules' imports; `src/base/Obs.d.ts` documents the legacy observable

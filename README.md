@@ -1,9 +1,9 @@
 # Quirk-Bench <img src="doc/favicon.svg" width="24" height="24" alt="" />
 
-[![ci](https://github.com/EnesSakalliUniWien/Quirk/actions/workflows/ci.yml/badge.svg)](https://github.com/EnesSakalliUniWien/Quirk/actions/workflows/ci.yml)
+[![ci](https://github.com/EnesSakalliUniWien/Quirk-Bench/actions/workflows/ci.yml/badge.svg)](https://github.com/EnesSakalliUniWien/Quirk-Bench/actions/workflows/ci.yml)
 
 Quirk-Bench is a browser-based workbench for constructing, simulating, and inspecting small quantum
-circuits. It is a fork of Craig Gidney's [Quirk](https://github.com/Strilanc/Quirk)
+circuits. It is based on Craig Gidney's [Quirk](https://github.com/Strilanc/Quirk)
 ([algassert.com/quirk](http://algassert.com/quirk)), rebuilt around a modern app shell: a gate
 sidebar with search and the circuit actions, a playhead transport docked with the state
 table, circuit zoom with an overview minimap, adjustable Rx/Ry/Rz rotation gates, and floating
@@ -53,11 +53,11 @@ The [user manual](doc/README.md) lists every action, display and gate with scree
 
 2. Clone the repository.
 
-   `git clone https://github.com/EnesSakalliUniWien/Quirk.git`
+   `git clone https://github.com/EnesSakalliUniWien/Quirk-Bench.git`
 
 3. Install the dependencies.
 
-   `cd Quirk`
+   `cd Quirk-Bench`
 
    `npm ci`
 
@@ -92,5 +92,5 @@ The [user manual](doc/README.md) lists every action, display and gate with scree
 
 # Disclaimer
 
-Quirk-Bench is a fork of [Quirk](https://github.com/Strilanc/Quirk). Neither is an official
+Quirk-Bench is based on [Quirk](https://github.com/Strilanc/Quirk). Neither is an official
 Google product; the original code is Copyright 2017 Google Inc., licensed under Apache 2.0.

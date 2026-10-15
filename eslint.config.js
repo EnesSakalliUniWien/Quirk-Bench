@@ -15,8 +15,7 @@ const harnessGlobals = {
 };
 
 export default [
-  // Historical review evidence is archived, not runnable application/tooling source.
-  { ignores: ["out/**", "node_modules/**", "doc/reviews/**"] },
+  { ignores: ["out/**", "node_modules/**"] },
   js.configs.recommended,
   {
     files: ["src/**/*.{js,jsx}"],

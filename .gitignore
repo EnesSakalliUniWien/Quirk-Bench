@@ -1,8 +1,10 @@
-# IDE and editor state.
+# IDE, editor and local tool state.
 .idea/*
-.claude/*
-# Except the dev-server launch config, which the preview tooling reads.
-!.claude/launch.json
+.claude/
+.impeccable/
+.serena/
+.kilo/
+PRODUCT.md
 
 # Dependencies and build output.
 node_modules/*
