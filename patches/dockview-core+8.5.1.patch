@@ -1,8 +1,8 @@
 diff --git a/node_modules/dockview-core/dist/package/main.cjs.js b/node_modules/dockview-core/dist/package/main.cjs.js
-index 3d3f2c8..7912b14 100644
+index da40833..1902e2c 100644
 --- a/node_modules/dockview-core/dist/package/main.cjs.js
 +++ b/node_modules/dockview-core/dist/package/main.cjs.js
-@@ -11944,7 +11944,7 @@ var AriaLevelTracker = class {
+@@ -12574,7 +12574,7 @@ var AriaLevelTracker = class {
  	}
  	update() {
  		for (let i = 0; i < this._orderedList.length; i++) {
@@ -11,7 +11,7 @@ index 3d3f2c8..7912b14 100644
  			this._orderedList[i].style.zIndex = `calc(var(--dv-overlay-z-index, 999) + ${i * 2})`;
  		}
  	}
-@@ -13854,7 +13854,7 @@ var OverlayRenderContainer = class extends CompositeDisposable {
+@@ -14754,7 +14754,7 @@ var OverlayRenderContainer = class extends CompositeDisposable {
  				if (!floatingGroup) return;
  				const element = floatingGroup.overlay.element;
  				const update = () => {
@@ -20,7 +20,7 @@ index 3d3f2c8..7912b14 100644
  					focusContainer.style.zIndex = `calc(var(--dv-overlay-z-index, 999) + ${level * 2 + 1})`;
  				};
  				const observer = new MutationObserver(() => {
-@@ -13862,7 +13862,7 @@ var OverlayRenderContainer = class extends CompositeDisposable {
+@@ -14762,7 +14762,7 @@ var OverlayRenderContainer = class extends CompositeDisposable {
  				});
  				observerDisposable.value = Disposable.from(() => observer.disconnect());
  				observer.observe(element, {
@@ -30,10 +30,10 @@ index 3d3f2c8..7912b14 100644
  				});
  				update();
 diff --git a/node_modules/dockview-core/dist/package/main.esm.mjs b/node_modules/dockview-core/dist/package/main.esm.mjs
-index 6e8fd8c..f3865f9 100644
+index a7327b5..afdb83b 100644
 --- a/node_modules/dockview-core/dist/package/main.esm.mjs
 +++ b/node_modules/dockview-core/dist/package/main.esm.mjs
-@@ -11942,7 +11942,7 @@ var AriaLevelTracker = class {
+@@ -12572,7 +12572,7 @@ var AriaLevelTracker = class {
  	}
  	update() {
  		for (let i = 0; i < this._orderedList.length; i++) {
@@ -42,7 +42,7 @@ index 6e8fd8c..f3865f9 100644
  			this._orderedList[i].style.zIndex = `calc(var(--dv-overlay-z-index, 999) + ${i * 2})`;
  		}
  	}
-@@ -13852,7 +13852,7 @@ var OverlayRenderContainer = class extends CompositeDisposable {
+@@ -14752,7 +14752,7 @@ var OverlayRenderContainer = class extends CompositeDisposable {
  				if (!floatingGroup) return;
  				const element = floatingGroup.overlay.element;
  				const update = () => {
@@ -51,7 +51,7 @@ index 6e8fd8c..f3865f9 100644
  					focusContainer.style.zIndex = `calc(var(--dv-overlay-z-index, 999) + ${level * 2 + 1})`;
  				};
  				const observer = new MutationObserver(() => {
-@@ -13860,7 +13860,7 @@ var OverlayRenderContainer = class extends CompositeDisposable {
+@@ -14760,7 +14760,7 @@ var OverlayRenderContainer = class extends CompositeDisposable {
  				});
  				observerDisposable.value = Disposable.from(() => observer.disconnect());
  				observer.observe(element, {
