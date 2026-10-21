@@ -7,6 +7,7 @@ import { downloadFile } from "../../../browser/downloadFile.js";
 import { TakeCard } from "./take-card.jsx";
 import { Compare } from "./compare.jsx";
 import { MotionSettings } from "./motion-settings.jsx";
+import { Button } from "../../ui/button.jsx";
 
 function TapeBody({ recorder }) {
   const records = useStore(recorder.store.items, (state) => state.value);
@@ -125,36 +126,36 @@ function TapeBody({ recorder }) {
             }}
           />
         </label>
-        <button
-          type="button"
+        <Button
+          variant="outline"
           onClick={() =>
             downloadFile(takeJson(album(saved)), "recordings.json")
           }
         >
           Download collection
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="outline"
           onClick={() =>
             downloadFile(takeCsv(saved), "recordings.csv", "text/csv")
           }
         >
           Download CSV
-        </button>
+        </Button>
       </div>
       {recovery && (
         <div className="tape-actions" role="status">
           <span>Deleted {recovery.take.name}.</span>
-          <button
+          <Button
+            variant="outline"
             ref={undoButton}
-            type="button"
             disabled={recovering}
             onClick={undoDeletion}
           >
             Undo deletion
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="outline"
             onClick={() =>
               act(() =>
                 downloadFile(takeJson(recovery.take), `${recovery.id}.json`),
@@ -162,14 +163,14 @@ function TapeBody({ recorder }) {
             }
           >
             Download deleted snapshot
-          </button>
-          <button
-            type="button"
+          </Button>
+          <Button
+            variant="outline"
             disabled={recovering}
             onClick={() => act(() => recorder.store.dismissRecovery())}
           >
             Dismiss recovery
-          </button>
+          </Button>
         </div>
       )}
       <MotionSettings settings={recorder.settings} />
@@ -177,14 +178,14 @@ function TapeBody({ recorder }) {
         <p role="alert">{message || storageError}</p>
       )}
       {unsaved.length > 0 && (
-        <button
-          type="button"
+        <Button
+          variant="outline"
           onClick={() =>
             downloadFile(takeJson(album(unsaved)), "unsaved-snapshots.json")
           }
         >
           Download unsaved snapshots
-        </button>
+        </Button>
       )}
       <div className="tape-strip">
         {shown.map((record) => (

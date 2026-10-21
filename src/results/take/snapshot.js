@@ -155,6 +155,12 @@ function hydrate(stored, circuit, take, step) {
   );
 }
 
+/** Only the stats a take shows at its saved step, leaving out the fullResult that restoreTake also builds. */
+function restoreStats(take) {
+  const circuit = Serializer.fromJson(CircuitDefinition, take.circuit);
+  return hydrate(take.result, circuit, take, take.step);
+}
+
 /** Restore a take created internally or already accepted by validateTake. */
 function restoreTake(take) {
   const circuit = Serializer.fromJson(CircuitDefinition, take.circuit);
@@ -169,4 +175,4 @@ function restoreTake(take) {
   };
 }
 
-export { createTake, measuredCounts, planTake, restoreTake };
+export { createTake, measuredCounts, planTake, restoreStats, restoreTake };

@@ -22,6 +22,27 @@ import { mergeMaps } from "../../../src/base/maps.js";
 
 const suite = new Suite("InputGates");
 
+suite.test("fallback editors parse the whole integer", () => {
+  for (const gate of [
+    Gates.InputGates.SetA,
+    Gates.InputGates.SetB,
+    Gates.InputGates.SetR,
+  ]) {
+    for (const text of ["1.5", "12xyz", "-1", "65536"])
+      assertThat(typeof gate.paramDialog.applyText(gate, text).error).isEqualTo(
+        "string",
+      );
+    for (const [text, expected] of [
+      ["0", 0],
+      ["65535", 65535],
+      ["1e3", 1000],
+    ])
+      assertThat(gate.paramDialog.applyText(gate, text).gate.param).isEqualTo(
+        expected,
+      );
+  }
+});
+
 const TEST_GATES = new Map([
   ["$", Gates.ModularIncrementGates.DecrementModRFamily],
   ["*", Gates.MultiplyAccumulateGates.MultiplyAddInputsFamily],

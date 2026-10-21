@@ -156,7 +156,8 @@ function StepsLane() {
       {/* The lane's one filled button: stepping through the circuit is what the transport is for. */}
       <Button
         id="playhead-play-button"
-        className={`${styles.play} ${styles.prominent}`}
+        className={styles.play}
+        variant="primary"
         size="default"
         disabled={!state.canPlay}
         aria-pressed={state.playing}

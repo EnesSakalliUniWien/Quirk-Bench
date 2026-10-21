@@ -34,11 +34,6 @@
     width: min(27.5rem, calc(100vw - 24px));
     max-width: none;
   }
-  :where(.gate-details-popup) .ui-button {
-    background-color: transparent;
-    color: inherit;
-    font-family: inherit;
-  }
   .gate-details-toolbar {
     position: sticky;
     top: -16px;
@@ -81,6 +76,23 @@
   .gate-details {
     display: grid;
     gap: calc(var(--spacing) * 3);
+  }
+
+  .measurement-symbol {
+    display: block;
+    width: 100%;
+    height: 100%;
+    font-family: var(--font-sans);
+    font-size: 12px;
+  }
+
+  .measurement-explanation {
+    display: grid;
+    gap: calc(var(--spacing) * 2);
+    margin: 0;
+    padding-left: calc(var(--spacing) * 5);
+    font-size: var(--text-small);
+    line-height: 1.5;
   }
 
   /* The sentences carry the same fractions the matrix does, so they get room to breathe rather
@@ -176,66 +188,8 @@
     white-space: pre;
   }
 
-  /* The rotation figure: big enough to read, and labelled, which the 65px canvas it replaces
-       was neither. */
   .circuit-figure {
     border: var(--border-width) solid var(--border);
     border-radius: var(--radius-medium);
-  }
-
-  /* In rem, so the drawing grows with the browser's text size; its labels and strokes are in the
-       drawing's own units and grow with it. Forge sets its own size. */
-  .rotation-figure {
-    width: 9.25rem;
-    height: 9.25rem;
-    flex: 0 0 auto;
-    overflow: visible;
-  }
-
-  .rotation-figure-sphere {
-    fill: var(--inset-surface);
-    stroke: var(--border);
-    stroke-width: 1;
-  }
-
-  .rotation-figure-guide {
-    fill: none;
-    stroke: var(--border);
-    stroke-width: 0.75;
-  }
-
-  .rotation-figure-axis {
-    stroke: var(--muted-foreground);
-    stroke-width: 0.75;
-    stroke-dasharray: 3 3;
-  }
-
-  .rotation-figure-axis-label {
-    fill: var(--muted-foreground);
-    font-family: var(--font-mono);
-    font-size: 9px;
-    text-anchor: middle;
-    dominant-baseline: middle;
-  }
-
-  .rotation-figure-turn-axis {
-    stroke: var(--brand-ink);
-    stroke-width: 2;
-    stroke-linecap: round;
-  }
-
-  .rotation-figure-turn {
-    fill: none;
-    stroke: var(--operator);
-    stroke-width: 2;
-    stroke-linecap: round;
-  }
-
-  .rotation-figure-turn-head {
-    stroke: none;
-  }
-
-  .rotation-figure-turn-head-fill {
-    fill: var(--operator);
   }
 }

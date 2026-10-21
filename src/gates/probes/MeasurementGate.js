@@ -16,6 +16,9 @@
 
 import { PathGeometry } from "../../draw/shapes/PathGeometry.js";
 import { drawPath } from "../../draw/shapes/ShapeView.js";
+import { fitText } from "../../draw/text/TextLayout.js";
+import { Typography } from "../../config/Typography.js";
+import { drawMeasurementCaption } from "../../draw/gate/MeasurementCaption.js";
 import { gateStyle } from "../../config/CanvasTheme.js";
 
 import { GateBuilder } from "../../circuit/model/Gate.js";
@@ -44,7 +47,7 @@ function drawMeasurementGate(args) {
       trace.arc(x, y, r, τ / 2, τ);
       PathGeometry.line(trace, x, y, p, q);
     },
-    [{ stroke: { color: style.text, width: 1 } }],
+    [{ stroke: { color: style.text, width: 1.5 } }],
   );
   // Draw the indicator head.
   drawPath(
@@ -52,6 +55,17 @@ function drawMeasurementGate(args) {
     (trace) => PathGeometry.arrowHead(trace, p, q, r * 0.3, a, τ / 4),
     [{ fill: style.text }],
   );
+  fitText(args.painter, "Z", {
+    x: args.rect.x + 9,
+    y: args.rect.y + 8,
+    align: "center",
+    baseline: "middle",
+    fill: style.text,
+    font: { fontSize: 11, fontFamily: Typography.DEFAULT_FONT_FAMILY },
+    width: 10,
+    height: 12,
+  });
+  drawMeasurementCaption(args, "deferred", { below: true });
 }
 
 const MeasurementGate = new GateBuilder()

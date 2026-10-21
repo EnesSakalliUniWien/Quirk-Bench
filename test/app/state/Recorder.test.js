@@ -596,3 +596,47 @@ suite.test(
     assertTrue(other.id !== take.id);
   },
 );
+
+suite.test("concurrent imports preserve different takes with the same id", () =>
+  using(setup(), async ({ recorder, store }) => {
+    const take = recorder.makeTake();
+    const [[first], [second]] = await Promise.all([
+      recorder.importText(takeJson(take)),
+      recorder.importText(takeJson({ ...take, name: "other" })),
+    ]);
+    assertTrue(first.id !== second.id);
+    await store.refresh();
+    assertThat(store.items.getState().value.map((r) => r.take.name)).isEqualTo([
+      take.name,
+      "other",
+    ]);
+  }),
+);
+
+suite.test(
+  "a failed import does not block the next queued import",
+  async () => {
+    const { recorder, store } = memorySetup();
+    const take = recorder.makeTake();
+    const write = store.write;
+    let fail = true;
+    store.write = async (...args) => {
+      if (fail) {
+        fail = false;
+        throw new Error("Import write failed");
+      }
+      return write(...args);
+    };
+    const results = await Promise.allSettled([
+      recorder.importText(takeJson(take)),
+      recorder.importText(takeJson({ ...take, name: "retry" })),
+    ]);
+    assertThat(results.map((r) => r.status)).isEqualTo([
+      "rejected",
+      "fulfilled",
+    ]);
+    assertThat(store.items.getState().value.map((r) => r.take.name)).isEqualTo([
+      "retry",
+    ]);
+  },
+);

@@ -1,6 +1,5 @@
 import {
   MIXED_NOTE,
-  PURE_STATE_THRESHOLD,
   UNDEFINED_TEXT,
   analyzerReadout,
   blochReading,
@@ -189,7 +188,7 @@ function panelReadout(vec, reading = blochReading(vec)) {
     state:
       reading.rule === "mixed"
         ? MIXED_NOTE
-        : reading.r > PURE_STATE_THRESHOLD
+        : reading.isPure
           ? pureStateText(reading.theta ?? 0, reading.phi ?? 0)
           : "mixed — |r| < 1 (entangled or decohered)",
     thetaDegrees: reading.theta === undefined ? 0 : toDegrees(reading.theta),
@@ -214,6 +213,19 @@ function anglesOf(readout) {
   };
 }
 
+/**
+ * One sentence for assistive technology: whose state, and where its arrow points.
+ * @param {string} subtitle
+ * @param {import("./analyzerModel.js").PanelReadout | null | undefined} readout
+ * @returns {string}
+ */
+function stateSummary(subtitle, readout) {
+  if (readout === null || readout === undefined)
+    return `${subtitle}: no state to show.`;
+  const mixed = !readout.isPure;
+  return `${subtitle}: θ ${readout.theta}, ϕ ${readout.phi}, |r| ${readout.length}${mixed ? ", mixed" : ""}.`;
+}
+
 export {
   glidesBetween,
   INITIAL_LAYERS,
@@ -222,5 +234,6 @@ export {
   densityMatrixOf,
   subtitleFor,
   panelReadout,
+  stateSummary,
   anglesOf,
 };

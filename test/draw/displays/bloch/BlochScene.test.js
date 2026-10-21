@@ -678,3 +678,12 @@ suite.test(
     assertTrue(avoided.x - 178 > 12);
   },
 );
+
+suite.test(
+  "the mixed-state shadow includes the exact pure-state threshold",
+  () => {
+    for (const r of [0.9987, 0.999, 0.9991]) {
+      assertThat(shadowOf({ x: r, y: 0, z: 0 }).inside).isEqualTo(r <= 0.999);
+    }
+  },
+);

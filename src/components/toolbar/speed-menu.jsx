@@ -1,6 +1,6 @@
 import styles from "./speed-menu.module.css";
 import { Menu } from "@base-ui/react/menu";
-import { GaugeIcon } from "lucide-react";
+import { CheckIcon, GaugeIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Animation } from "../../config/Animation.js";
@@ -79,6 +79,9 @@ function SpeedMenu({ lane, value, onChange }) {
                       <span className={styles.value}>{option}×</span>
                       <span className={styles.paces}>{pace(option)}</span>
                     </span>
+                    <Menu.RadioItemIndicator className="app-menu-item-check">
+                      <CheckIcon size={14} aria-hidden="true" />
+                    </Menu.RadioItemIndicator>
                   </Menu.RadioItem>
                 ))}
               </Menu.RadioGroup>

@@ -4,6 +4,7 @@
 .impeccable/
 .serena/
 .kilo/
+.chunkhound/
 PRODUCT.md
 
 # Dependencies and build output.
@@ -13,3 +14,7 @@ screenshot.png
 
 # macOS Finder metadata.
 .DS_Store
+# CocoIndex Code (ccc)
+/.cocoindex_code/*
+!/.cocoindex_code/settings.yml
+!/.cocoindex_code/global_settings.yml

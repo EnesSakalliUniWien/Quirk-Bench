@@ -30,6 +30,9 @@ const AmplitudeDisplayFamily = Gate.buildFamily(1, 16, (span, builder) =>
     )
     .setWidth(span === 1 ? 2 : span % 2 === 0 ? span : Math.ceil(span / 2))
     .promiseHasNoNetEffectOnStateVector()
+    // The ket of an entangled span says nothing of its wires' own states, which the Complex values
+    // panel's Bloch analysis reads from these densities.
+    .markAsRendererNeedsSingleQubitDensityStats()
     .setExtraDisableReasonFinder((args) =>
       args.isNested ? "No nested\ndisplay" : undefined,
     )

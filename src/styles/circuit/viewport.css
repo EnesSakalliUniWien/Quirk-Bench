@@ -55,43 +55,21 @@
     background: var(--background);
   }
 
-  /* The overview's height, so the bar holds both on one even line. Inside its border each button
-       is the 28-point target a touch or a click can land on without care. */
+  /* The overview's height, so the bar holds both on one even line. Inside its border each sm
+       ui-button is the 28-point target a touch or a click can land on without care; on a coarse
+       pointer they grow to 44 and the cluster grows with them. */
 
   .circuit-zoom-controls {
     display: flex;
     box-sizing: border-box;
-    height: 30px;
-    overflow: hidden;
+    min-height: 30px;
     border: var(--border-width) solid var(--border);
     border-radius: var(--radius-medium);
     background: var(--card);
   }
 
   .circuit-zoom-button {
-    display: inline-flex;
-    min-width: 28px;
-    align-items: center;
-    justify-content: center;
-    padding: 0 9px;
-    border: 0;
-    background: transparent;
-    color: var(--muted-foreground);
-    cursor: pointer;
-    font-size: 0.75rem;
     font-variant-numeric: tabular-nums;
-  }
-
-  /* The zoom icons are drawn on the 24px grid; here they sit on the buttons' text line. */
-
-  .circuit-zoom-button svg {
-    width: 14px;
-    height: 14px;
-  }
-
-  .circuit-zoom-button:hover {
-    color: var(--foreground);
-    background: var(--accent);
   }
 
   /* The overview stretches along the bar, before the zoom cluster: the circuit's whole width
@@ -113,5 +91,13 @@
 
   .circuit-minimap[hidden] {
     display: none;
+  }
+}
+
+/* In the components layer, after the shared button's rest colour: the zoom cluster rests in the
+   muted ink over the canvas, and the ghost hover still lifts it to the foreground. */
+@layer components {
+  .circuit-zoom-button.ui-button {
+    color: var(--muted-foreground);
   }
 }

@@ -5,6 +5,7 @@ import { downloadFile } from "../../../browser/downloadFile.js";
 import { useMemo, useState } from "react";
 import { AppInfo } from "../../../config/AppInfo.js";
 import { useObservedValue } from "../../useObservedValue.js";
+import { Button } from "../../ui/button.jsx";
 import { CopyButton } from "./copy-button.jsx";
 
 /**
@@ -144,15 +145,15 @@ function ExportPanelBody({ deps }) {
               />{" "}
               Full circuit (default: playhead)
             </label>
-            <button
-              type="button"
+            <Button
+              variant="outline"
               id="export-take-download"
               onClick={() => downloadFile(simulationJson(), "snapshot.json")}
             >
               Download snapshot JSON
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="outline"
               onClick={() =>
                 downloadFile(
                   takeCsv([currentTake()]),
@@ -162,7 +163,7 @@ function ExportPanelBody({ deps }) {
               }
             >
               Download probabilities CSV
-            </button>
+            </Button>
             <CopyButton
               id="export-take-csv-copy"
               resultId="export-take-csv-result"

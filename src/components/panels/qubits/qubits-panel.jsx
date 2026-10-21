@@ -1,11 +1,10 @@
-import { useMemo } from "react";
+import { BlochAnalysis } from "../../math/bloch-analysis.jsx";
+import { useCallback, useMemo } from "react";
+import { blochReading } from "../../../engine/math/bloch.js";
 
 import { wireLabel } from "../../../circuit/registerLabels.js";
 import { qubitReadings } from "../../../engine/simulation/qubitMarginals.js";
 import { usePlayheadStats } from "../shared/usePlayheadStats.js";
-
-/** Purity this close to 1 reads as a qubit in a state of its own. */
-const PURE = 0.999;
 
 /**
  * @param {!number} v
@@ -30,6 +29,16 @@ function QubitsPanel() {
         : qubitReadings(sample.stats, sample.wireCount),
     [sample],
   );
+  const getBlochStates = useCallback(
+    () => [
+      {
+        label: "At the playhead",
+        registers: sample.stats.circuitDefinition.registers,
+        qubits: marginals,
+      },
+    ],
+    [sample, marginals],
+  );
 
   if (marginals === undefined) {
     return <p className="debug-panel-empty">Waiting for the circuit…</p>;
@@ -43,7 +52,7 @@ function QubitsPanel() {
           Qubits at the playhead
         </h2>
         <span className="debug-panel-summary">
-          {`${marginals.filter((q) => q.purity < PURE).length} of ${marginals.length} mixed`}
+          {`${marginals.filter((q) => Number.isFinite(q.purity) && !blochReading(q.bloch).isPure).length} of ${marginals.length} mixed`}
         </span>
       </header>
       <div className="qubits-table-scroll">
@@ -81,7 +90,7 @@ function QubitsPanel() {
                 <td>
                   <span
                     className={
-                      purity < PURE
+                      Number.isFinite(purity) && !blochReading(bloch).isPure
                         ? "qubits-purity qubits-mixed"
                         : "qubits-purity"
                     }
@@ -94,6 +103,7 @@ function QubitsPanel() {
           </tbody>
         </table>
       </div>
+      <BlochAnalysis getStates={getBlochStates} />
       <p className="debug-panel-note">
         Purity is 1 for a qubit in a state of its own and 0.5 for one maximally
         entangled with the others. Without measurement or post-selection,

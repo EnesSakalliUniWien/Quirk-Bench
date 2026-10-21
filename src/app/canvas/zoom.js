@@ -98,7 +98,9 @@ function initZoomControls(container, fitFactorProvider) {
   const makeButton = (content, label, onActivate) => {
     const button = document.createElement("button");
     button.type = "button";
-    button.className = "circuit-zoom-button";
+    button.className = "ui-button circuit-zoom-button";
+    button.dataset.variant = "ghost";
+    button.dataset.size = "sm";
     if (typeof content === "string") {
       button.textContent = content;
     } else {
@@ -110,8 +112,8 @@ function initZoomControls(container, fitFactorProvider) {
     return button;
   };
 
-  // The minus and plus come from src/resources/icons, where the app keeps the icons it draws
-  // itself; the stylesheet sizes them to the buttons' text line.
+  // The minus and plus are lucide-react's, rendered to markup in src/resources/icons; the shared
+  // sm button sizes them to 14px.
   makeButton(iconElement("minus"), "Zoom out", () =>
     setCircuitZoom(circuitZoom() / ZOOM_STEP),
   );

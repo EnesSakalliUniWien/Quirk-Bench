@@ -3,6 +3,7 @@ import { ControlRow } from "./control-row.jsx";
 
 /**
  * @typedef {object} AxisKeyProps
+ * @property {string=} idPrefix Unique prefix when embedded; the standalone panel retains its IDs.
  * @property {string | undefined} pinnedAxis The axis held in focus, if any.
  * @property {(axis: string) => void} onTogglePin Holds an axis, or lets go of the one held.
  * @property {(axis: string | undefined) => void} onPreview Previews an axis while it is hovered
@@ -15,7 +16,7 @@ import { ControlRow } from "./control-row.jsx";
  *
  * @param {AxisKeyProps} props
  */
-function AxisKey({ pinnedAxis, onTogglePin, onPreview }) {
+function AxisKey({ idPrefix = "bloch", pinnedAxis, onTogglePin, onPreview }) {
   return (
     <ControlRow label="Axes">
       <ul className="bloch-legend" aria-label="Axis colours">
@@ -23,7 +24,7 @@ function AxisKey({ pinnedAxis, onTogglePin, onPreview }) {
           <li key={axis}>
             <button
               type="button"
-              id={`bloch-axis-${axis}-button`}
+              id={`${idPrefix}-axis-${axis}-button`}
               className={`bloch-legend-axis bloch-axis-${axis}`}
               aria-pressed={pinnedAxis === axis}
               aria-label={`Read the ${axis} axis on its own`}

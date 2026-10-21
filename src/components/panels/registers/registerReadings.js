@@ -1,5 +1,5 @@
 import { registerValue } from "../../../circuit/registerLabels.js";
-import { qubitMarginals } from "../../../engine/simulation/qubitMarginals.js";
+import { qubitReadings } from "../../../engine/simulation/qubitMarginals.js";
 import { paddedState } from "../../../engine/simulation/stepAlgebra.js";
 
 /** A value this unlikely cannot come out. */
@@ -18,7 +18,7 @@ function registerReadings(stats, wireCount) {
   const { registers } = stats.circuitDefinition;
   const state = paddedState(stats.finalState, wireCount);
   const amplitudes = state.rawBuffer();
-  const marginals = qubitMarginals(state, wireCount);
+  const marginals = qubitReadings(stats, wireCount);
   const size = 1 << wireCount;
   const chance = (i) => amplitudes[i * 2] ** 2 + amplitudes[i * 2 + 1] ** 2;
   let total = 0;

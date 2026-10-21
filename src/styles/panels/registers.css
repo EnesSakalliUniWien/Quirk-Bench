@@ -25,6 +25,7 @@
 
   .registers-ungroup {
     margin-left: auto;
+    color: var(--muted-foreground);
   }
 
   /* The lines under the head start where the name does, past the swatch. */
@@ -105,8 +106,16 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* A value chip is its own control, not a Button. */
   .registers-values button {
+    color: var(--secondary-foreground);
+    background: var(--control-surface);
     cursor: pointer;
+  }
+
+  .registers-values button:hover {
+    color: var(--foreground);
+    background: var(--control-hover);
   }
 
   /* The register's value labels, and the form that adds one. */
@@ -137,17 +146,14 @@
     color: var(--muted-foreground);
   }
 
-  .registers-label-remove {
-    padding: 0 4px;
-    border: 0;
-    background: transparent;
+  /* The remove Button in a chip: 24px square, pulled into the chip's padding so the chip keeps its
+     height. */
+  .registers-label .registers-label-remove {
+    width: 1.5rem;
+    height: 1.5rem;
+    margin: -4px -2px -4px 0;
+    padding: 0;
     color: var(--muted-foreground);
-    font: inherit;
-    cursor: pointer;
-  }
-
-  .registers-label-remove:hover {
-    color: var(--foreground);
   }
 
   /* On a line of its own under the labels, so it never breaks up their row. */
@@ -164,22 +170,6 @@
   .registers-label-input {
     width: 5rem;
     font-family: var(--font-mono);
-  }
-
-  .registers-remove {
-    padding: 2px 8px;
-    border: var(--border-width) solid var(--border);
-    border-radius: 6px;
-    background: transparent;
-    color: var(--muted-foreground);
-    font: inherit;
-    font-size: var(--text-small);
-    cursor: pointer;
-  }
-
-  .registers-remove:hover {
-    color: var(--foreground);
-    background: var(--accent);
   }
 
   .registers-qubits {

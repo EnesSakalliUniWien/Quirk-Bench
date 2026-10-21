@@ -40,6 +40,7 @@ import { bin } from "../../base/Format.js";
 import { Registers } from "../../circuit/model/Registers.js";
 import { ketLabel } from "../../circuit/registerLabels.js";
 import { Matrix } from "../../engine/math/matrix/Matrix.js";
+import { interpretComplexCell } from "../../engine/math/complex/complexCell.js";
 import { Point } from "../../geometry/Point.js";
 import { Rect } from "../../geometry/Rect.js";
 
@@ -327,8 +328,14 @@ function renderState(
     focusPoints,
     (c, r) => `Amplitude of |${basis(index(c, r))}⟩ (decimal ${index(c, r)})`,
     (c, r, v) => `val:${v.toString(Format.SIMPLIFIED)}`,
-    (c, r, v) =>
-      `mag²:${(v.norm2() * 100).toFixed(4)}%, phase:${signedFixed((v.phase() * 180) / Math.PI, 2)}°`,
+    (c, r, v) => {
+      const { phase } = interpretComplexCell(v, coherent);
+      const phaseText =
+        phase === undefined
+          ? "Undefined"
+          : `${signedFixed((phase * 180) / Math.PI, 2)}°`;
+      return `mag²:${(v.norm2() * 100).toFixed(4)}%, phase:${phaseText}`;
+    },
   );
   if (phaseLockIndex !== undefined && indicatorAlpha > 0) {
     // The cell whose phase was taken as zero, which every other hand is measured from: it wears

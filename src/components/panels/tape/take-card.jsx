@@ -1,5 +1,5 @@
 import { useColourScheme } from "../../useColourScheme.js";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { distributions } from "../../../results/take/distributions.js";
 import { takeJson } from "../../../results/files/json.js";
 import { takeCsv } from "../../../results/files/csv.js";
@@ -7,7 +7,10 @@ import { takeLink } from "../../../results/files/link.js";
 import { downloadFile } from "../../../browser/downloadFile.js";
 import { Theme } from "../../../config/Theme.js";
 import { CopyButton } from "../export/copy-button.jsx";
+import { Button } from "../../ui/button.jsx";
 import { Distribution } from "./distribution.jsx";
+import { BlochAnalysis } from "../../math/bloch-analysis.jsx";
+import { takeQubits } from "../../../results/take/bloch.js";
 
 /** The most frequent measured outcomes, as their bits, highest bit first. */
 function measuredSummary(take, jointCounts) {
@@ -25,6 +28,11 @@ function TakeCard({ record, selected, onSelect, recorder, act, onDelete }) {
   useColourScheme();
   const { take, ghost, linked = false } = record;
   const values = useMemo(() => distributions(take), [take]);
+  // Stable per take, so the open Bloch analysis restores the take once, not on every render.
+  const getStates = useCallback(
+    () => [{ label: take.name, qubits: takeQubits(take) }],
+    [take],
+  );
   const [name, setName] = useState(take.name);
   const [notes, setNotes] = useState(take.notes);
   const editedTake = () => ({ ...take, name: name.trim() || take.name, notes });
@@ -93,6 +101,14 @@ function TakeCard({ record, selected, onSelect, recorder, act, onDelete }) {
         ))}
       </div>
       {measured !== undefined && <p className="take-measurement">{measured}</p>}
+      {take.result.available ? (
+        <BlochAnalysis getStates={getStates} />
+      ) : (
+        <p>
+          Bloch analysis is unavailable: this recording has no physical density
+          history.
+        </p>
+      )}
       {Object.entries(take.result.samples).map(([key, v]) => (
         <p key={key}>
           Sample {key}: {v.i}
@@ -110,23 +126,26 @@ function TakeCard({ record, selected, onSelect, recorder, act, onDelete }) {
       </details>
       <div className="tape-actions">
         {(ghost || linked) && (
-          <button type="button" onClick={keep}>
+          <Button variant="outline" onClick={keep}>
             Keep
-          </button>
+          </Button>
         )}
-        <button type="button" onClick={() => act(() => recorder.restore(take))}>
+        <Button
+          variant="outline"
+          onClick={() => act(() => recorder.restore(take))}
+        >
           Restore
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="outline"
           onClick={() =>
             act(() => downloadFile(takeJson(take), `${take.id}.json`))
           }
         >
           JSON
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="outline"
           onClick={() =>
             act(() =>
               downloadFile(takeCsv([take]), `${take.id}.csv`, "text/csv"),
@@ -134,7 +153,7 @@ function TakeCard({ record, selected, onSelect, recorder, act, onDelete }) {
           }
         >
           CSV
-        </button>
+        </Button>
         <CopyButton
           label="Copy JSON"
           title="Snapshot JSON"
@@ -153,9 +172,9 @@ function TakeCard({ record, selected, onSelect, recorder, act, onDelete }) {
           text={() => takeLink(take, location.href)}
           fallback="Download this snapshot using JSON to share it, or retry."
         />
-        <button type="button" onClick={remove}>
+        <Button variant={linked ? "outline" : "danger"} onClick={remove}>
           {linked ? "Dismiss" : "Delete"}
-        </button>
+        </Button>
       </div>
     </article>
   );

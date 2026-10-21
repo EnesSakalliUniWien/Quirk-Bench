@@ -1,3 +1,5 @@
+import { Button } from "../../ui/button.jsx";
+
 /**
  * @typedef {object} AnalyzerFooterProps
  * @property {() => void} onClose
@@ -11,9 +13,9 @@
 function AnalyzerFooter({ onClose }) {
   return (
     <div className="panel-action-row bloch-actions">
-      <button id="bloch-close-button" type="button" onClick={onClose}>
+      <Button variant="outline" id="bloch-close-button" onClick={onClose}>
         Close
-      </button>
+      </Button>
     </div>
   );
 }

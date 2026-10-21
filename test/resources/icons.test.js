@@ -1,6 +1,6 @@
 import { Suite, assertThat } from "../TestUtil.js";
 import {
-  ICON_MARKUP,
+  ICON_NAMES,
   ICON_STROKE_WIDTH,
   iconElement,
 } from "../../src/resources/icons/index.js";
@@ -9,30 +9,33 @@ import { PANELS } from "../../src/components/panels/panels.jsx";
 const suite = new Suite("icons");
 
 suite.test(
-  "the icons the app draws itself match Lucide's grid, colour and stroke",
+  "the icons for the corners built without React are lucide-react's",
   () => {
-    for (const [name, markup] of Object.entries(ICON_MARKUP)) {
-      for (const attribute of [
-        'viewBox="0 0 24 24"',
-        'stroke="currentColor"',
-        'fill="none"',
-        `stroke-width="${ICON_STROKE_WIDTH}"`,
-        'stroke-linecap="round"',
-        'stroke-linejoin="round"',
-      ]) {
-        assertThat(markup.includes(attribute))
-          .withInfo({ name, attribute })
-          .isEqualTo(true);
-      }
+    for (const name of ICON_NAMES) {
+      const svg = iconElement(name);
+      assertThat(svg.tagName.toLowerCase()).withInfo({ name }).isEqualTo("svg");
+      assertThat(svg.classList.contains("lucide"))
+        .withInfo({ name })
+        .isEqualTo(true);
+      assertThat(svg.classList.contains(`lucide-${name}`))
+        .withInfo({ name })
+        .isEqualTo(true);
+      assertThat(svg.getAttribute("stroke"))
+        .withInfo({ name })
+        .isEqualTo("currentColor");
+      assertThat(svg.getAttribute("stroke-width"))
+        .withInfo({ name })
+        .isEqualTo(`${ICON_STROKE_WIDTH}`);
+      assertThat(svg.getAttribute("aria-hidden"))
+        .withInfo({ name })
+        .isEqualTo("true");
     }
   },
 );
 
-suite.test("an icon element is one hidden svg", () => {
-  const svg = iconElement("x");
-  assertThat(svg.tagName.toLowerCase()).isEqualTo("svg");
-  assertThat(svg.getAttribute("aria-hidden")).isEqualTo("true");
-  assertThat(svg.querySelectorAll("path").length).isEqualTo(2);
+suite.test("an icon element is a fresh svg each time", () => {
+  assertThat(iconElement("x") !== iconElement("x")).isEqualTo(true);
+  assertThat(iconElement("x").querySelectorAll("path").length).isEqualTo(2);
 });
 
 suite.test(

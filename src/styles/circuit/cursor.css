@@ -43,6 +43,5 @@
   /* The hint lets presses and drops through, all but its one button. */
   .circuit-empty-hint .ui-button {
     pointer-events: auto;
-    border-color: var(--control-border);
   }
 }

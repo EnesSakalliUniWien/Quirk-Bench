@@ -1,14 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 
-import { PURE_STATE_THRESHOLD } from "../../../engine/math/bloch.js";
 import { appStore } from "../../../state/appStore.js";
 import { closePanel } from "../../dock.jsx";
 import { useCompletedResult } from "../shared/usePlayheadStats.js";
 import { AnalyzerFooter } from "./analyzer-footer.jsx";
 import { AnalyzerGroup } from "./analyzer-group.jsx";
 import { AnalyzerHeader } from "./analyzer-header.jsx";
-import { INITIAL_LAYERS, anglesOf, subtitleFor } from "./analyzerModel.js";
+import {
+  INITIAL_LAYERS,
+  anglesOf,
+  stateSummary,
+  subtitleFor,
+} from "./analyzerModel.js";
 import { AxisKey } from "./axis-key.jsx";
 import { BlochFigures } from "./bloch-figures.jsx";
 import { ExploreControls } from "./explore-controls.jsx";
@@ -235,18 +239,5 @@ function BlochPanel() {
 
 /** How long the state must hold still before the summary is read out. */
 const SUMMARY_SETTLE_MS = 700;
-
-/**
- * One sentence for assistive technology: whose state, and where its arrow points.
- * @param {string} subtitle
- * @param {import("./analyzerModel.js").PanelReadout | null | undefined} readout
- * @returns {string}
- */
-function stateSummary(subtitle, readout) {
-  if (readout === null || readout === undefined)
-    return `${subtitle}: no state to show.`;
-  const mixed = Number(readout.length) < PURE_STATE_THRESHOLD;
-  return `${subtitle}: θ ${readout.theta}, ϕ ${readout.phi}, |r| ${readout.length}${mixed ? ", mixed" : ""}.`;
-}
 
 export { BlochPanel };

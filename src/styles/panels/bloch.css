@@ -145,12 +145,6 @@
     border-top: var(--border-width) solid var(--border);
   }
 
-  .bloch-figure-header .bloch-reset-view {
-    height: 1.5rem;
-    padding: 0 0.5rem;
-    font-size: var(--text-caption);
-  }
-
   /* A figure's title bar sits above its canvas, so no axis letter drawn inside can meet it. */
 
   .bloch-figure-header {
@@ -320,11 +314,6 @@
   .bloch-presets {
     flex-wrap: wrap;
     max-width: 100%;
-  }
-
-  .bloch-presets .ui-button[aria-pressed="true"] {
-    color: var(--primary-foreground);
-    background: var(--primary);
   }
 
   /* An angle: its symbol, a slider and the same value as a number. */
@@ -564,32 +553,116 @@
   /* Each axis is named in its own colour: the colour of the triangles that measure it and of
        the letter the sphere paints at its poles, in the key and in the rows alike. */
 
-  .bloch-panel .bloch-axis-x {
+  :is(.bloch-panel, .shared-bloch-analysis) .bloch-axis-x {
     color: var(--bloch-axis-x-text);
   }
 
-  .bloch-panel .bloch-axis-y {
+  :is(.bloch-panel, .shared-bloch-analysis) .bloch-axis-y {
     color: var(--bloch-axis-y-text);
   }
 
-  .bloch-panel .bloch-axis-z {
+  :is(.bloch-panel, .shared-bloch-analysis) .bloch-axis-z {
     color: var(--bloch-axis-z-text);
   }
 
   /* The swatch is the axis's own hue, the one its triangles and letters wear on the figures. */
-  .bloch-panel .bloch-axis-x .bloch-swatch {
+  :is(.bloch-panel, .shared-bloch-analysis) .bloch-axis-x .bloch-swatch {
     background: var(--bloch-axis-x);
   }
 
-  .bloch-panel .bloch-axis-y .bloch-swatch {
+  :is(.bloch-panel, .shared-bloch-analysis) .bloch-axis-y .bloch-swatch {
     background: var(--bloch-axis-y);
   }
 
-  .bloch-panel .bloch-axis-z .bloch-swatch {
+  :is(.bloch-panel, .shared-bloch-analysis) .bloch-axis-z .bloch-swatch {
     background: var(--bloch-axis-z);
   }
 
   .bloch-actions {
     justify-content: flex-end;
+  }
+}
+
+@layer components {
+  .shared-bloch-analysis {
+    margin-block: calc(var(--spacing) * 3);
+    min-width: 0;
+    width: 100%;
+    max-width: 100%;
+    border-block: var(--border-width) solid var(--border);
+  }
+
+  .shared-bloch-analysis > summary {
+    cursor: pointer;
+    padding-block: calc(var(--spacing) * 3);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .shared-bloch-body {
+    container: shared-bloch / inline-size;
+    min-width: 0;
+    padding-block: calc(var(--spacing) * 2);
+  }
+
+  .shared-bloch-selectors {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 3);
+    align-items: center;
+    margin-bottom: calc(var(--spacing) * 3);
+  }
+
+  .shared-bloch-selectors label {
+    display: grid;
+    gap: var(--spacing);
+    flex: 1 1 8rem;
+    min-width: 0;
+  }
+
+  .shared-bloch-selectors select {
+    width: 100%;
+    min-width: 0;
+    color: var(--foreground);
+    background: var(--background);
+    border: var(--border-width) solid var(--border);
+    border-radius: var(--radius-medium);
+    padding: calc(var(--spacing) * 2);
+  }
+
+  .shared-bloch-view,
+  .shared-bloch-input {
+    display: grid;
+    gap: calc(var(--spacing) * 3);
+    min-width: 0;
+  }
+
+  .shared-bloch-view .bloch-figures {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "sphere" "projections";
+  }
+
+  .shared-bloch-view .bloch-projections {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .shared-bloch-view .bloch-display {
+    grid-column: 1 / -1;
+  }
+
+  .shared-bloch-view .bloch-sidebar {
+    min-width: 0;
+  }
+
+  .shared-bloch-view .bloch-group {
+    min-width: 0;
+    padding-block: calc(var(--spacing) * 2);
+  }
+
+  @container shared-bloch (min-width: 600px) {
+    .shared-bloch-view .bloch-figures {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      grid-template-areas: "sphere projections";
+    }
   }
 }

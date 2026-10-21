@@ -30,6 +30,8 @@ import "../test_e2e/transport.test.js";
 import "../test_e2e/toolbox.test.js";
 import "../test_e2e/errors.test.js";
 import "../test_e2e/debugPanels.test.js";
+import "../test_e2e/blochAnalysis.test.js";
+import "../test_e2e/measurement.test.js";
 import "../test_e2e/registers.test.js";
 import "../test_e2e/gateMenu.test.js";
 import "../test_e2e/tape.test.js";

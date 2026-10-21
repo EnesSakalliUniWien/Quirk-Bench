@@ -115,9 +115,18 @@ async function waitForCircuit(page, expectedCircuit) {
  */
 const panelSelector = (name) => `[data-panel-id="${name}"]`;
 
+/**
+ * Open means shown. Dockview puts a new panel in the document a frame before it positions and
+ * reveals its overlay; until then the panel is visibility: hidden and nothing in it takes focus.
+ */
 async function waitForPanel(page, name, expectedOpen) {
   await page.waitForFunction(
-    (selector, open) => (document.querySelector(selector) !== null) === open,
+    (selector, open) => {
+      const panel = document.querySelector(selector);
+      return open
+        ? panel?.checkVisibility({ visibilityProperty: true }) === true
+        : panel === null;
+    },
     { timeout: TEST_TIMEOUT_MILLIS },
     panelSelector(name),
     expectedOpen,
@@ -126,7 +135,30 @@ async function waitForPanel(page, name, expectedOpen) {
 
 /** Closes a panel through its tab's close control, the way a user would. */
 async function closePanel(page, name) {
-  await page.click(`[data-tab-panel-id="${name}"]`);
+  const tabSelector = `[data-tab-panel-id="${name}"]`;
+  await page.$eval(tabSelector, (tab) =>
+    tab.scrollIntoView({ block: "nearest", inline: "nearest" }),
+  );
+  // A new floating window lays its header out at a sliver's width for its first frames, with the
+  // close action drawn over the tab: a click there then closes the panel instead of selecting it.
+  await page.waitForFunction(
+    (selector) => {
+      const tab = document.querySelector(selector);
+      const box = tab?.getBoundingClientRect();
+      return (
+        box !== undefined &&
+        tab.contains(
+          document.elementFromPoint(
+            box.x + box.width / 2,
+            box.y + box.height / 2,
+          ),
+        )
+      );
+    },
+    { timeout: TEST_TIMEOUT_MILLIS },
+    tabSelector,
+  );
+  await page.click(tabSelector);
   await page.waitForSelector(`[data-close-panel-id="${name}"]`, {
     visible: true,
   });

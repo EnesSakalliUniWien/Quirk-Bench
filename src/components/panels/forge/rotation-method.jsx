@@ -3,6 +3,7 @@ import { MatrixMethod } from "./matrix-method.jsx";
 import { normalizedAxis, parseRotationDraft } from "./construction.js";
 import { parseAngleExpression } from "../../../engine/math/formula/AngleExpression.js";
 import { useRef } from "react";
+import { Button } from "../../ui/button.jsx";
 
 export function RotationMethod({ draft, onDraftChange, onCreate, onCancel }) {
   const unitDrafts = useRef({});
@@ -43,9 +44,10 @@ export function RotationMethod({ draft, onDraftChange, onCreate, onCancel }) {
       <fieldset className="axis-presets">
         <legend>Rotation axis</legend>
         {["X", "Y", "Z", "Custom"].map((value) => (
-          <button
+          <Button
             key={value}
             type="button"
+            variant="outline"
             aria-pressed={draft.preset === value}
             onClick={() =>
               set({
@@ -55,7 +57,7 @@ export function RotationMethod({ draft, onDraftChange, onCreate, onCancel }) {
             }
           >
             {value}
-          </button>
+          </Button>
         ))}
       </fieldset>
       {draft.preset === "Custom" && (

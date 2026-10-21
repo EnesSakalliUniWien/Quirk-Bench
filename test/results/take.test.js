@@ -17,6 +17,7 @@ import { takeLink } from "../../src/results/files/link.js";
 import { qubitReadings } from "../../src/engine/simulation/qubitMarginals.js";
 import { TapeStore } from "../../src/results/tapeStore.js";
 import { CircuitStats } from "../../src/engine/simulation/CircuitStats.js";
+import { takeQubits } from "../../src/results/take/bloch.js";
 
 const suite = new Suite("Tape results");
 
@@ -30,6 +31,32 @@ const takeFor = (cols, step = cols.length) => {
   const c = circuit(cols);
   return createTake(new Simulator().evaluate(c, c.numWires, step));
 };
+
+suite.testUsingWebGL(
+  "recorded Bloch analysis uses physical density rather than shot counts or coherent amplitudes",
+  () => {
+    const coherent = takeFor([["H"]]);
+    assertThat(takeQubits(coherent)[0].bloch.x).isApproximatelyEqualTo(1);
+    const measured = takeFor([["H"], ["Measure"]]);
+    const loaded = parseTakes(takeJson(measured))[0];
+    const qubits = takeQubits(loaded);
+    assertThat(qubits[0].bloch).isApproximatelyEqualTo({ x: 0, y: 0, z: 0 });
+    loaded.measurement.counts = [[0, loaded.measurement.shots]];
+    assertThat(takeQubits(loaded)).isEqualTo(qubits);
+    loaded.result.available = false;
+    assertThat(takeQubits(loaded)).isEqualTo([]);
+  },
+);
+
+suite.testUsingWebGL(
+  "recorded Bloch analysis reads only the result at the saved step, never the fullResult",
+  () => {
+    const take = takeFor([["H"], ["Z"]], 1);
+    const qubits = takeQubits({ ...take, fullResult: undefined });
+    assertThat(qubits[0].bloch).isApproximatelyEqualTo({ x: 1, y: 0, z: 0 });
+    assertThat(qubits).isEqualTo(takeQubits(take));
+  },
+);
 
 suite.testUsingWebGL(
   "full JSON and album round trip preserve sampled results",

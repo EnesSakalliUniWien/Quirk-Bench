@@ -1,6 +1,6 @@
 @layer components {
   /* Probabilities: the layout tabs, each group's name, and the step headers. The tabs are the
-       plain control buttons Forge's method tabs use, the active one filled. */
+       plain control buttons Forge's method tabs use, the active one in the shared on style. */
 
   .probabilities-layouts {
     display: grid;
@@ -12,12 +12,6 @@
     display: flex;
     flex-wrap: wrap;
     gap: 4px;
-  }
-
-  .probabilities-tabs [data-active] {
-    color: var(--primary-foreground);
-    background: var(--primary);
-    border-color: var(--foreground);
   }
 
   .probabilities-tab-panel {

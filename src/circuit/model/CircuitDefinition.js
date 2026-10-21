@@ -729,7 +729,8 @@ class CircuitDefinition {
         c.gates[row].isSingleQubitDisplay &&
         this.gateAtLocIsDisabledReason(col, row) === undefined
       ) {
-        total |= 1 << row;
+        // An amplitude display spans several wires and wants a density for each.
+        total |= ((1 << c.gates[row].height) - 1) << row;
       }
     }
 

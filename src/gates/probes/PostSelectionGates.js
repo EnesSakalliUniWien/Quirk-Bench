@@ -14,48 +14,20 @@
  * limitations under the License.
  */
 
-import { fitText } from "../../draw/text/TextLayout.js";
-import { rectangle } from "../../draw/shapes/ShapeView.js";
-
 import { Complex } from "../../engine/math/complex/Complex.js";
-import { CanvasTheme } from "../../config/CanvasTheme.js";
-import { Typography } from "../../config/Typography.js";
 import { GateBuilder } from "../../circuit/model/Gate.js";
-import { DEFAULT_RENDERER } from "../../draw/gate/GateRenderers.js";
+import { paintBackground, paintOutline } from "../../draw/gate/GateFrame.js";
+import { drawMeasurementCaption } from "../../draw/gate/MeasurementCaption.js";
 import { paintGateSymbol } from "../../draw/gate/GateSymbol.js";
 import { Matrix } from "../../engine/math/matrix/Matrix.js";
 
 const PostSelectionGates = {};
 
 const POST_SELECT_RENDERER = (args) => {
-  if (args.isHighlighted) {
-    DEFAULT_RENDERER(args);
-  } else {
-    rectangle(args.painter, args.rect, { fill: CanvasTheme.surface.gate });
-    paintGateSymbol(args);
-  }
-
-  const { x, y, w, h } = args.rect;
-  fitText(args.painter, "post-", {
-    x: x + w / 2,
-    y,
-    align: "center",
-    baseline: "hanging",
-    fill: CanvasTheme.text.muted,
-    font: { fontSize: 10, fontFamily: Typography.DEFAULT_FONT_FAMILY },
-    width: w,
-    height: h / 2,
-  });
-  fitText(args.painter, "select", {
-    x: x + w / 2,
-    y: y + h,
-    align: "center",
-    baseline: "bottom",
-    fill: CanvasTheme.text.muted,
-    font: { fontSize: 10, fontFamily: Typography.DEFAULT_FONT_FAMILY },
-    width: w,
-    height: h / 2,
-  });
+  paintBackground(args);
+  paintOutline(args);
+  paintGateSymbol(args);
+  drawMeasurementCaption(args, "post-select");
 };
 
 /** @type {!Gate} */

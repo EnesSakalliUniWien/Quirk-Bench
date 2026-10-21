@@ -64,6 +64,8 @@ function drawColumn(context, painter, gateColumn, col, hand, stats) {
           focusPoints:
             context.highlightedSlot === undefined ? hand.hoverPoints() : [],
           customStats: stats.customStatsForSlot(col, row),
+          isReached:
+            context.playheadStep === undefined || col < context.playheadStep,
         },
       ),
       renderer,

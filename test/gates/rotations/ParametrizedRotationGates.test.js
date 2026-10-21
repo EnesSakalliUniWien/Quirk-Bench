@@ -528,3 +528,24 @@ suite.test("invalid_formula_is_not_time_dependent", () => {
   assertThat(g.withParam("t + )").stableDuration()).isEqualTo(Infinity);
   assertThat(g.withParam("atna(t)").stableDuration()).isEqualTo(Infinity);
 });
+
+suite.test(
+  "formula dialog rejects unparseable formulas and keeps valid ones exact",
+  () => {
+    for (const gate of Gates.ParametrizedRotationGates.all) {
+      if (gate.paramDialog === undefined) continue;
+      for (const text of ["abc!", "1+*", "pi/(", "sin(pi t"]) {
+        assertThat(typeof gate.paramDialog.applyText(gate, text).error)
+          .withInfo({ gate: gate.serializedId, text })
+          .isEqualTo("string");
+      }
+      // Negative, multiple-turn and t-dependent formulas stay exactly as typed.
+      for (const text of ["-pi/2", "5pi", "-7pi/3 + pi t", "sin(pi t)"]) {
+        assertThat(gate.paramDialog.applyText(gate, text).gate.param)
+          .withInfo({ gate: gate.serializedId, text })
+          .isEqualTo(text);
+      }
+      assertThat(gate.paramDialog.applyText(gate, "").gate).isEqualTo(gate);
+    }
+  },
+);

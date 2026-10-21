@@ -276,7 +276,10 @@ test("Keeping a ghost immediately after editing preserves metadata and results o
         await page.waitForSelector(".take-ghost");
         const original = (await records(page)).find((r) => r.ghost).take;
         const selector = `[data-take-id="${original.id}"]`;
-        if (field === "notes") await page.click(`${selector} summary`);
+        if (field === "notes") {
+          await page.click(`${selector} details:has(> textarea) > summary`);
+          await page.waitForSelector(`${selector} textarea`, { visible: true });
+        }
         const input = `${selector} ${field === "name" ? 'input[aria-label^="Name"]' : "textarea"}`;
         await page.focus(input);
         await page.$eval(input, (e) => e.select());
@@ -573,7 +576,8 @@ test("Tape Undo survives panel closure and restores the last blurred metadata on
       await waitSaved(page, 1);
       const original = (await records(page))[0];
       const selector = `[data-take-id="${original.id}"]`;
-      await page.click(`${selector} summary`);
+      await page.click(`${selector} details:has(> textarea) > summary`);
+      await page.waitForSelector(`${selector} textarea`, { visible: true });
       await page.focus(`${selector} textarea`);
       await page.keyboard.type("Saved immediately before deletion");
       await page.evaluate((selector) => {

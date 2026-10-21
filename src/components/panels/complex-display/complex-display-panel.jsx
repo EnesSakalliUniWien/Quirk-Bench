@@ -5,23 +5,22 @@ import { appStore } from "../../../state/appStore.js";
 import { useCompletedResult } from "../shared/usePlayheadStats.js";
 import { useOnScreen } from "../shared/useOnScreen.js";
 import { displayData } from "./displayData.js";
+import { BlochAnalysis } from "../../math/bloch-analysis.jsx";
+import { DataView } from "../../math/data-view.jsx";
+import { Matrix } from "../../../engine/math/matrix/Matrix.js";
+import { Complex } from "../../../engine/math/complex/Complex.js";
 import { paintInto } from "../../../draw/surface/SharedPaintSurface.js";
 import {
   DATA_RENDERERS,
   stateGridRect,
 } from "../../../draw/renderers/dataRenderers.js";
 import { densityGridRect } from "../../../draw/displays/density/DensityMatrixView.js";
-import {
-  rectangle,
-  circle,
-  strokePath,
-} from "../../../draw/shapes/ShapeView.js";
-import { drawText } from "../../../draw/text/TextLayout.js";
+import { rectangle } from "../../../draw/shapes/ShapeView.js";
 import { CanvasTheme, phaseColor } from "../../../config/CanvasTheme.js";
 import { Rect } from "../../../geometry/Rect.js";
-import { Point } from "../../../geometry/Point.js";
 import { bin } from "../../../base/Format.js";
 import { ketLabel } from "../../../circuit/registerLabels.js";
+import { interpretComplexCell } from "../../../engine/math/complex/complexCell.js";
 
 const SIZE = 320;
 
@@ -51,12 +50,12 @@ function DisplayInspector({ data }) {
   const row = Math.min(selection.row, matrix.height() - 1),
     col = Math.min(selection.col, matrix.width() - 1);
   const value = matrix.cell(col, row);
-  const finite = Number.isFinite(value.real) && Number.isFinite(value.imag);
-  const magnitude = Math.hypot(value.real, value.imag);
-  const phase =
-    finite && coherent && magnitude > 0
-      ? (Math.atan2(value.imag, value.real) * 180) / Math.PI
-      : undefined;
+  const { finite, magnitude, phase } = interpretComplexCell(value, coherent);
+  const phaseMatrix = useMemo(
+    () =>
+      phase === undefined ? undefined : Matrix.square(Complex.polar(1, phase)),
+    [phase],
+  );
   const bits = Math.round(Math.log2(matrix.height()));
   const label =
     kind === "density"
@@ -66,53 +65,54 @@ function DisplayInspector({ data }) {
     <div className="panel-body complex-display-panel">
       <h2>{kind === "density" ? "Density matrix" : "Amplitudes"}</h2>
       <p>Choose a cell, or use the arrow keys on the grid.</p>
+      <BlochAnalysis getStates={() => [data.analysis]} />
+      {data.measured && (
+        <p>
+          Measurement deferred: this grid shows simulation amplitudes. Bloch
+          analysis uses the physical density matrices after measurement.
+        </p>
+      )}
       <DisplayGrid data={data} row={row} col={col} select={select} />
       <div className="complex-cell-controls">
-        <label>
-          Row{" "}
-          <input
-            type="number"
-            min="0"
-            max={matrix.height() - 1}
-            value={row}
-            onChange={(event) =>
-              select({
-                row: Math.max(
-                  0,
-                  Math.min(
-                    matrix.height() - 1,
-                    Math.trunc(Number(event.target.value)) || 0,
-                  ),
-                ),
-                col,
-              })
-            }
-          />
-        </label>
-        <label>
-          Column{" "}
-          <input
-            type="number"
-            min="0"
-            max={matrix.width() - 1}
-            value={col}
-            onChange={(event) =>
-              select({
-                row,
-                col: Math.max(
-                  0,
-                  Math.min(
-                    matrix.width() - 1,
-                    Math.trunc(Number(event.target.value)) || 0,
-                  ),
-                ),
-              })
-            }
-          />
-        </label>
+        {["row", "col"].map((axis) => {
+          const max = (axis === "row" ? matrix.height() : matrix.width()) - 1;
+          return (
+            <label key={axis}>
+              {axis === "row" ? "Row" : "Column"}{" "}
+              <input
+                type="number"
+                min="0"
+                max={max}
+                value={axis === "row" ? row : col}
+                onChange={(event) =>
+                  select({
+                    row,
+                    col,
+                    [axis]: Math.max(
+                      0,
+                      Math.min(
+                        max,
+                        Math.trunc(Number(event.target.value)) || 0,
+                      ),
+                    ),
+                  })
+                }
+              />
+            </label>
+          );
+        })}
       </div>
       <h3>{label}</h3>
-      <PhaseFigure value={value} defined={phase !== undefined} />
+      {phaseMatrix && (
+        <DataView
+          kind="matrix"
+          data={phaseMatrix}
+          width={150}
+          height={150}
+          className="complex-phase-figure"
+          label="Selected complex entry's phase direction; radius is normalized"
+        />
+      )}
       <dl aria-live="polite">
         <dt>{coherent ? "Stored complex value" : "Probability"}</dt>
         <dd>
@@ -141,7 +141,11 @@ function DisplayInspector({ data }) {
           </>
         )}
         <dt>Phase</dt>
-        <dd>{phase === undefined ? "Undefined" : `${phase.toFixed(6)}°`}</dd>
+        <dd>
+          {phase === undefined
+            ? "Undefined"
+            : `${((phase * 180) / Math.PI).toFixed(6)}°`}
+        </dd>
       </dl>
       <h3>How to read the display</h3>
       <p>
@@ -161,7 +165,11 @@ function DisplayInspector({ data }) {
         cell for its stored value.
       </p>
       {coherent && (
-        <div className="complex-phase-key" aria-label="Phase colour key">
+        <div
+          className="complex-phase-key"
+          role="group"
+          aria-label="Phase colour key"
+        >
           {[0, 90, 180, 270].map((degrees) => (
             <span key={degrees}>
               <i
@@ -283,74 +291,6 @@ function DisplayGrid({ data, row, col, select }) {
           col: Math.max(0, Math.min(matrix.width() - 1, col + delta[1])),
         });
       }}
-    />
-  );
-}
-
-function PhaseFigure({ value, defined }) {
-  const scheme = useColourScheme();
-  const canvas = useRef(null);
-  const onScreen = useOnScreen(canvas);
-  useEffect(() => {
-    if (!onScreen) return undefined;
-    let active = true;
-    void paintInto(
-      canvas.current,
-      180,
-      150,
-      (view) => {
-        const center = new Point(90, 75),
-          radius = 50;
-        circle(view, center, radius, {
-          stroke: { color: CanvasTheme.stroke.guide, width: 1 },
-        });
-        strokePath(
-          view,
-          [new Point(25, 75), new Point(155, 75)],
-          CanvasTheme.stroke.guide,
-          1,
-        );
-        strokePath(
-          view,
-          [new Point(90, 15), new Point(90, 135)],
-          CanvasTheme.stroke.guide,
-          1,
-        );
-        drawText(view, "Re", { x: 155, y: 90 });
-        drawText(view, "Im", { x: 95, y: 15 });
-        if (defined) {
-          const angle = Math.atan2(value.imag, value.real);
-          strokePath(
-            view,
-            [
-              center,
-              new Point(
-                90 + radius * Math.cos(angle),
-                75 - radius * Math.sin(angle),
-              ),
-            ],
-            CanvasTheme.text.primary,
-            2,
-          );
-        } else
-          drawText(view, "Phase undefined", { x: 90, y: 145, align: "center" });
-      },
-      () => active,
-    ).catch(() => {});
-    return () => {
-      active = false;
-    };
-  }, [value.real, value.imag, defined, onScreen, scheme]);
-  return (
-    <canvas
-      ref={canvas}
-      className="complex-phase-figure"
-      role="img"
-      aria-label={
-        defined
-          ? "Phase direction on the complex plane; radius is normalized"
-          : "Phase undefined"
-      }
     />
   );
 }

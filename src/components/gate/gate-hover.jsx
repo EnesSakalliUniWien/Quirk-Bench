@@ -5,6 +5,7 @@ import { XIcon } from "lucide-react";
 
 import { Button } from "../ui/button.jsx";
 import { GateDetails } from "./gate-details.jsx";
+import { measurementDescription } from "../../circuit/measurementDescription.js";
 
 // Each family of toolbox triggers shares one window and passes its gate as the payload.
 const gateHoverHandle = PreviewCard.createHandle();
@@ -40,7 +41,12 @@ function GateHoverCard({ latestTime }) {
               <PreviewCard.Popup className="gate-hover">
                 <div className="gate-details-header">
                   <h2 className="gate-details-title">{payload?.name}</h2>
-                  <p className="gate-details-blurb">{payload?.blurb}</p>
+                  <p className="gate-details-blurb">
+                    {payload
+                      ? (measurementDescription(payload)?.summary ??
+                        payload.blurb)
+                      : ""}
+                  </p>
                   <p className="gate-details-note">
                     Use the gate’s details button for matrices and diagrams.
                   </p>

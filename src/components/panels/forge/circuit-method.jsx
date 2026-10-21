@@ -7,6 +7,7 @@ import { GatePreview } from "../../gate/gate-preview.jsx";
 import { useDraftPreview } from "./useDraftPreview.js";
 import { validateCircuitRange, parseCircuitDraft } from "./construction.js";
 import { inputKey } from "./inputs.js";
+import { Button } from "../../ui/button.jsx";
 
 export function CircuitMethod({
   deps,
@@ -149,12 +150,17 @@ export function CircuitMethod({
         </div>
       </div>
       <footer className="construction-actions">
-        <button type="button" onClick={onCancel}>
+        <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
-        </button>
-        <button id="gate-forge-circuit-button" type="submit" disabled={!value}>
+        </Button>
+        <Button
+          id="gate-forge-circuit-button"
+          type="submit"
+          variant="primary"
+          disabled={!value}
+        >
           Create gate
-        </button>
+        </Button>
       </footer>
     </form>
   );

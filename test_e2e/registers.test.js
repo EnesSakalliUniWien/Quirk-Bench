@@ -25,6 +25,7 @@ import {
   waitForCircuit,
   waitForPanel,
   waitForCanvasViewport,
+  currentCircuit,
   circuitMetrics,
   circuitTopForWires,
   TEST_TIMEOUT_MILLIS,
@@ -398,6 +399,58 @@ test("the palette offers prepare boxes, and one after a gate on its wires is dis
       )
       .then((handle) => handle.jsonValue());
     assert.equal(summary, "2 of 4 outcomes possible · largest 50.0%");
+  });
+});
+
+test("Registers restore refused numbers and commit valid edits", async (browser) => {
+  const circuit = { cols: [["H"]], registers: [{ name: "a", wires: [1, 1] }] };
+  await withQuirkPage(browser, circuit, async (page) => {
+    await page.click("#registers-button");
+    await waitForPanel(page, "registers", true);
+    const first = '[aria-label="First wire of a"]';
+    const qubits = '[aria-label="How many qubits a covers"]';
+    await page.waitForSelector(qubits, { visible: true });
+    const enter = async (selector, text, key) => {
+      await page.focus(selector);
+      await page.$eval(selector, (input) => input.select());
+      await page.keyboard.press("Backspace");
+      await page.keyboard.type(text);
+      await page.keyboard.press(key);
+    };
+    for (const [selector, text, key] of [
+      [qubits, "1.5", "Tab"],
+      [qubits, "17", "Enter"],
+      [first, "-1", "Tab"],
+      [first, "", "Tab"],
+    ]) {
+      await enter(selector, text, key);
+      assert.equal(await page.$eval(selector, (input) => input.value), "1");
+      assert.ok(
+        await page.$eval("#registers-error", (error) =>
+          error.textContent.trim(),
+        ),
+      );
+      await waitForCircuit(page, circuit);
+    }
+    await enter(first, "0", "Enter");
+    await waitForCircuit(page, {
+      cols: circuit.cols,
+      registers: [{ name: "a", wires: [0, 1] }],
+    });
+    await enter(qubits, "2", "Tab");
+    assert.deepEqual((await currentCircuit(page)).registers, [
+      { name: "a", wires: [0, 2] },
+    ]);
+    await waitForCircuit(page, {
+      cols: circuit.cols,
+      registers: [{ name: "a", wires: [0, 2] }],
+    });
+    assert.equal(await page.$eval(first, (input) => input.value), "0");
+    assert.equal(await page.$eval(qubits, (input) => input.value), "2");
+    assert.equal(
+      await page.$eval("#registers-error", (error) => error.textContent.trim()),
+      "",
+    );
   });
 });
 

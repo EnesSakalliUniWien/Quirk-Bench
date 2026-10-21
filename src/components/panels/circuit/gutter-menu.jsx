@@ -1,4 +1,5 @@
 import { Menu } from "@base-ui/react/menu";
+import { CheckIcon } from "lucide-react";
 import { INPUT_LETTERS } from "../../../circuit/model/InputLetters.js";
 import { appStore } from "../../../state/appStore.js";
 import { openPanel } from "../../dock.jsx";
@@ -90,6 +91,9 @@ function GutterMenu({ menu, host, actions }) {
                   >
                     <Menu.RadioItem className="app-menu-item" value="">
                       None
+                      <Menu.RadioItemIndicator className="app-menu-item-check">
+                        <CheckIcon size={14} aria-hidden="true" />
+                      </Menu.RadioItemIndicator>
                     </Menu.RadioItem>
                     {INPUT_LETTERS.map((letter) => (
                       <Menu.RadioItem
@@ -98,6 +102,9 @@ function GutterMenu({ menu, host, actions }) {
                         value={letter}
                       >
                         {`Input ${letter}`}
+                        <Menu.RadioItemIndicator className="app-menu-item-check">
+                          <CheckIcon size={14} aria-hidden="true" />
+                        </Menu.RadioItemIndicator>
                       </Menu.RadioItem>
                     ))}
                   </Menu.RadioGroup>

@@ -1,8 +1,10 @@
+import { XIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { INPUT_LETTERS } from "../../../circuit/model/InputLetters.js";
 import { Registers } from "../../../circuit/model/Registers.js";
 import { wireLabel } from "../../../circuit/registerLabels.js";
 import { Simulation } from "../../../config/Simulation.js";
+import { Button } from "../../ui/button.jsx";
 
 /** How many of a register's values are named beside it; any more are counted. */
 const SHOWN_VALUES = 4;
@@ -33,7 +35,12 @@ function RegisterRow({
   }, [focused, onDone]);
 
   const apply = (change) => {
-    const refused = actions.replace(register.name, { ...register, ...change });
+    // Readings may lag an earlier edit while the panel's refresh is throttled.
+    const current = actions.current().named(register.name);
+    const refused =
+      current === undefined
+        ? `There is no register named "${register.name}".`
+        : actions.replace(register.name, { ...current, ...change });
     onRefused(refused);
     return refused === undefined;
   };
@@ -45,19 +52,24 @@ function RegisterRow({
   };
   // Applied when the field is left or Enter is pressed, like the name: applying every keystroke
   // would move the register through every number typed on the way, one undo step each.
-  const applyNumber = (field, text) => {
-    const value = Number(text);
-    if (Number.isInteger(value) && value !== register[field]) {
-      apply({ [field]: value });
+  const applyNumber = (field, input) => {
+    const committed =
+      actions.current().named(register.name)?.[field] ?? register[field];
+    const value = input.valueAsNumber;
+    if (value === committed) {
+      input.value = String(value);
+      onRefused(undefined);
+    } else if (!apply({ [field]: value })) {
+      input.value = String(committed);
     }
   };
   const numberProps = (field) => ({
-    onBlur: (event) => applyNumber(field, event.target.value),
+    onBlur: (event) => applyNumber(field, event.currentTarget),
     onKeyDown: (event) => {
       event.stopPropagation();
       if (event.nativeEvent.isComposing) return;
       if (event.key === "Enter") {
-        applyNumber(field, event.target.value);
+        applyNumber(field, event.currentTarget);
         event.preventDefault();
       }
     },
@@ -107,15 +119,15 @@ function RegisterRow({
           onBlur={applyName}
         />
         <span className="registers-wires">{wires}</span>
-        <button
-          type="button"
-          className="registers-remove registers-ungroup"
+        <Button
+          size="icon"
+          className="registers-ungroup"
           aria-label={`Ungroup ${register.name}`}
           title="Ungroup: the wires keep their gates and lose the name"
           onClick={() => onRefused(actions.remove(register.name))}
         >
-          ×
-        </button>
+          <XIcon aria-hidden="true" />
+        </Button>
       </div>
       {/* One line each under the name, all starting past the swatch: its wires and input, the
           values it holds, their labels, and its qubits. */}
@@ -196,16 +208,16 @@ function RegisterRow({
           <span key={value} className="registers-label">
             <b>{label}</b>
             <span className="registers-label-value">{`= ${value}`}</span>
-            <button
-              type="button"
+            <Button
+              size="sm"
               className="registers-label-remove"
               aria-label={`Remove the label ${label} from value ${value} of ${register.name}`}
               onClick={() =>
                 onRefused(actions.label(register.name, value, undefined))
               }
             >
-              ×
-            </button>
+              <XIcon aria-hidden="true" />
+            </Button>
           </span>
         ))}
         {/* eslint-disable-next-line jsx-a11y-x/no-noninteractive-element-interactions -- Keep native input keystrokes inside the form and prevent IME Enter from submitting before composition ends. */}
@@ -246,9 +258,9 @@ function RegisterRow({
               spellCheck="false"
             />
           </label>
-          <button type="submit" className="registers-remove">
+          <Button type="submit" variant="outline" size="sm">
             Label
-          </button>
+          </Button>
         </form>
       </div>
       <ul className="registers-qubits">

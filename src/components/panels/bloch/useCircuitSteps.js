@@ -23,9 +23,6 @@ function useCircuitSteps(target, completed) {
   const steps = useMemo(() => {
     if (algebra === undefined || target === undefined) return [];
     return algebra.states.map((state, index) => {
-      // Impossible postselection has no normalized state. Match the marginal calculation's
-      // normalization threshold, preserving the step with an unavailable vector.
-      const norm = state.norm2();
       const gates =
         index === 0
           ? ""
@@ -34,14 +31,11 @@ function useCircuitSteps(target, completed) {
               .map((gate) => gate.symbol)
               .join(" ");
       return {
-        vec:
-          Number.isFinite(norm) && norm > 1e-12
-            ? qubitMarginals(
-                state,
-                algebra.wireCount,
-                circuit.colIsMeasuredMask(index),
-              )[target.row]?.bloch
-            : undefined,
+        vec: qubitMarginals(
+          state,
+          algebra.wireCount,
+          circuit.colIsMeasuredMask(index),
+        )[target.row]?.bloch,
         label: index === 0 ? "start" : gates || "·",
         // The step's whole name, for assistive technology: where it stands and what the column holds.
         name:

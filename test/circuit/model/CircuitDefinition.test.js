@@ -775,6 +775,12 @@ suite.test("colDesiredSingleQubitStatsMask", () => {
   ]).isEqualTo([
     0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
   ]);
+  // An amplitude display wants a density for every wire it covers; a multi-wire density display
+  // reads its own matrix instead.
+  assertAbout("?", [
+    "?",
+    Gates.Displays.AmplitudeDisplayFamily.ofSize(2),
+  ]).isEqualTo([0, 3, 0, 0]);
   assertAbout("%D@").isEqualTo([0, 1, 1, 1, 0, 0]);
   assertAbout(`---%--
                  %--%-!

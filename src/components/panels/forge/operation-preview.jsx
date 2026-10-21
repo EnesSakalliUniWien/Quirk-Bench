@@ -1,14 +1,9 @@
-import { QubitMatrix } from "../../../engine/math/matrix/QubitMatrix.js";
 import { OperatorMatrix } from "../../math/operator-matrix.jsx";
-import { RotationFigure } from "../../gate/rotation-figure.jsx";
+import { OperationBlochAnalysis } from "../../math/bloch-analysis.jsx";
 import { inspectMatrix } from "./construction.js";
 
 export function OperationPreview({ matrix }) {
-  const { qubits, unitary, residual } = inspectMatrix(matrix);
-  const rotation =
-    unitary && qubits === 1
-      ? QubitMatrix.operationToAngleAxisRotation(matrix)
-      : undefined;
+  const { qubits, unitary, residual, rotation } = inspectMatrix(matrix);
   return (
     <div className="forge-operation-preview">
       <div className="operation-status">
@@ -25,7 +20,7 @@ export function OperationPreview({ matrix }) {
       {rotation && (
         <>
           <h3>Bloch rotation</h3>
-          <RotationFigure axis={rotation.axis} angle={rotation.angle} />
+          <OperationBlochAnalysis matrix={matrix} />
         </>
       )}
     </div>

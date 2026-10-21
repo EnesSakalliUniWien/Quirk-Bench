@@ -6,6 +6,7 @@ import { BlochFigure } from "./bloch-figure.jsx";
  * @typedef {(event: import("react").PointerEvent<HTMLCanvasElement>) => void} PointerHandler
  *
  * @typedef {object} BlochFiguresProps
+ * @property {string=} idPrefix Unique prefix when embedded; the standalone panel retains its IDs.
  * @property {import("react").ReactNode=} children State controls beside or directly below the sphere.
  * @property {import("react").ReactNode=} displayControls Layers and axes below the projections.
  * @property {CanvasRef} sphereRef
@@ -70,6 +71,7 @@ function descriptions(readout) {
  * @param {BlochFiguresProps} props
  */
 function BlochFigures({
+  idPrefix = "bloch",
   children,
   displayControls,
   sphereRef,
@@ -92,8 +94,8 @@ function BlochFigures({
         action={
           rotated ? (
             <Button
-              id="bloch-reset-view"
-              size="default"
+              id={`${idPrefix}-reset-view`}
+              size="sm"
               className="bloch-reset-view"
               onClick={onResetView}
             >
@@ -103,7 +105,7 @@ function BlochFigures({
         }
       >
         <canvas
-          id="bloch-canvas"
+          id={`${idPrefix}-canvas`}
           ref={sphereRef}
           className="bloch-canvas drag-canvas"
           width="320"
@@ -124,7 +126,7 @@ function BlochFigures({
           caption="through z · θ"
         >
           <canvas
-            id="bloch-meridian-canvas"
+            id={`${idPrefix}-meridian-canvas`}
             ref={meridianRef}
             className="bloch-projection-canvas"
             role="img"
@@ -137,7 +139,7 @@ function BlochFigures({
           caption="x and y · ϕ"
         >
           <canvas
-            id="bloch-equator-canvas"
+            id={`${idPrefix}-equator-canvas`}
             ref={equatorRef}
             className="bloch-projection-canvas"
             role="img"

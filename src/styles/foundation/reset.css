@@ -34,8 +34,6 @@
     font-family: var(--font-sans);
   }
 
-  .app-toolbar button,
-  .transport-bar .ui-button,
   .gate-toolbox button {
     margin: 0;
     font: inherit;
@@ -45,9 +43,6 @@
     background: transparent;
   }
 
-  .app-toolbar button:not(:disabled),
-  .app-toolbar [role="button"]:not(:disabled),
-  .transport-bar button:not(:disabled),
   .gate-toolbox button:not(:disabled) {
     cursor: pointer;
   }

@@ -38,7 +38,6 @@ import {
   blochCoordinates,
   blochReading,
   degreesText,
-  PURE_STATE_THRESHOLD,
 } from "../../../engine/math/bloch.js";
 
 /**
@@ -72,7 +71,7 @@ function _paintBlochSphereDisplay_tooltips(
     labelText: "Bloch sphere · click to enlarge",
     // |r| is the vector's length: 1 for a pure qubit, less when it is mixed or entangled.
     valueText:
-      `|r| ${r.toFixed(3)} (${r > PURE_STATE_THRESHOLD ? "pure" : "mixed or entangled, no single direction"}), ` +
+      `|r| ${r.toFixed(3)} (${reading.isPure ? "pure" : reading.rule === "mixed" ? "maximally mixed, no Bloch direction" : "mixed or entangled"}), ` +
       `θ:${degreesText(theta)}, ϕ:${degreesText(phi)}`,
     valueText2: `x:${signedFixed(vec.x, 4)}, y:${signedFixed(vec.y, 4)}, z:${signedFixed(vec.z, 4)}`,
   });
@@ -81,9 +80,10 @@ function _paintBlochSphereDisplay_tooltips(
 /**
  * @param {!DisplayView} painter
  * @param {!Rect} drawArea
- * @param {!number} r The length of the reduced Bloch vector.
+ * @param {!import('../../../engine/math/bloch.js').BlochReading} reading
  */
-function _paintBlochSphereDisplay_purity(painter, drawArea, r) {
+function _paintBlochSphereDisplay_purity(painter, drawArea, reading) {
+  const r = Math.min(1, reading.r);
   const x = drawArea.center().x;
   const y = drawArea.bottom();
   const readoutHeight =
@@ -96,10 +96,7 @@ function _paintBlochSphereDisplay_purity(painter, drawArea, r) {
     y,
     align: "center",
     baseline: "bottom",
-    fill:
-      r > PURE_STATE_THRESHOLD
-        ? CanvasTheme.text.primary
-        : CanvasTheme.bloch.mixed,
+    fill: reading.isPure ? CanvasTheme.text.primary : CanvasTheme.bloch.mixed,
     font: { fontSize, fontFamily: Typography.MONO_FONT_FAMILY },
     width: drawArea.w,
     height: readoutHeight,
@@ -147,7 +144,6 @@ function paintBlochSphereDisplay(
   const hasNaN = qubitDensityMatrix.hasNaN();
   const vec = hasNaN ? undefined : blochCoordinates(qubitDensityMatrix);
   const reading = hasNaN ? undefined : blochReading(vec);
-  const r = hasNaN ? NaN : Math.min(1, reading.r);
 
   // The shared painter, sized so its sphere has radius u about c, drawn in this painter's own
   // coordinates and unfilled, so a hovered gate's tint shows around the sphere.
@@ -187,7 +183,7 @@ function paintBlochSphereDisplay(
   }
 
   if (!hasNaN) {
-    _paintBlochSphereDisplay_purity(painter, drawArea, r);
+    _paintBlochSphereDisplay_purity(painter, drawArea, reading);
     _paintBlochSphereDisplay_tooltips(painter, c, u, vec, reading, focusPoints);
   }
 }

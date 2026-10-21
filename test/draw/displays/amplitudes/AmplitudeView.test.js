@@ -13,6 +13,7 @@ const suite = new Suite("AmplitudeView");
 
 const statsFor = (gate, data) => ({
   customStatsForSlot: () => data,
+  qubitDensityMatrix: () => Matrix.zero(2, 2).times(NaN),
   circuitDefinition: {
     columns: [{ gates: [gate] }],
     registers: CircuitDefinition.EMPTY.registers,
@@ -111,14 +112,7 @@ suite.test(
         incoherentKet: Matrix.fromRows([[0, 1]]),
         phaseLockIndex: 0,
       };
-      const stats = {
-        customStatsForSlot: () => data,
-        circuitDefinition: {
-          columns: [{ gates: [gate] }],
-          registers: CircuitDefinition.EMPTY.registers,
-          colIsMeasuredMask: () => 0,
-        },
-      };
+      const stats = statsFor(gate, data);
       const inspector = displayData(stats, { col: 0, row: 0, gate });
       const view = new DisplayView(document.createElement("canvas"));
       AMPLITUDE_RENDERER_FROM_CUSTOM_STATS({

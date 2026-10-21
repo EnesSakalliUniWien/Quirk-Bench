@@ -36,6 +36,7 @@ class GateRenderParams {
    * @param {undefined|!{row: !int, col: !int}} positionInCircuit
    * @param {!Array.<!Point>} focusPoints
    * @param {undefined|*} customStatsForCircuitPos
+   * @param {!boolean=} isReached Whether the playhead has reached this gate.
    */
   constructor(
     painter,
@@ -49,6 +50,7 @@ class GateRenderParams {
     positionInCircuit,
     focusPoints,
     customStatsForCircuitPos,
+    isReached = true,
   ) {
     /** @type {!DisplayView} */
     this.painter = painter;
@@ -72,6 +74,7 @@ class GateRenderParams {
     this.focusPoints = focusPoints;
     /** @type {undefined|*} */
     this.customStats = customStatsForCircuitPos;
+    this.isReached = isReached;
   }
 
   /**
@@ -88,7 +91,8 @@ class GateRenderParams {
    *     isResizeShowing: (!boolean|undefined),
    *     isResizeHighlighted: (!boolean|undefined),
    *     focusPoints: (!Array.<!Point>|undefined),
-   *     customStats: (*|undefined)
+   *     customStats: (*|undefined),
+   *     isReached: (!boolean|undefined)
    * }=} opts
    * @returns {!GateRenderParams}
    */
@@ -113,6 +117,7 @@ class GateRenderParams {
       positionInCircuit,
       opts.focusPoints || [],
       opts.customStats,
+      opts.isReached ?? true,
     );
   }
 
@@ -159,6 +164,7 @@ class GateRenderParams {
       this.positionInCircuit,
       this.focusPoints,
       this.customStats,
+      this.isReached,
     );
   }
 

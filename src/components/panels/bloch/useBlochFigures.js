@@ -1,70 +1,11 @@
-import { onColourSchemeChange } from "../../../appearance/colourScheme.js";
-import { useEffect, useMemo, useRef, useState } from "react";
-
-import {
-  DEFAULT_VIEW,
-  drawBlochScene,
-} from "../../../draw/displays/bloch/BlochScene.js";
-import { drawBlochProjection } from "../../../draw/displays/bloch/BlochProjections.js";
-import { drawBlochStrip } from "../../../draw/displays/bloch/BlochStrip.js";
-import { clock } from "../../../base/Clock.js";
-import { prefersReducedMotion } from "../../../browser/reducedMotion.js";
-import { Animation } from "../../../config/Animation.js";
-import { motionSettings } from "../../../state/motionSettings.js";
-import { RenderSurface } from "../../../draw/surface/RenderSurface.js";
-import {
-  blochCoordinates,
-  blochReading,
-  blochVectorBetween,
-} from "../../../engine/math/bloch.js";
+import { useEffect, useMemo } from "react";
+import { blochCoordinates } from "../../../engine/math/bloch.js";
 import { appStore } from "../../../state/appStore.js";
 import { closePanel } from "../../dock.jsx";
-import {
-  densityMatrixOf,
-  glidesBetween,
-  panelReadout,
-} from "./analyzerModel.js";
+import { useBlochView } from "../../math/useBlochView.js";
+import { densityMatrixOf } from "./analyzerModel.js";
 
-/**
- * @typedef {object} BlochFiguresInputs
- * @property {Object | undefined} deps The panel dependencies: the completed simulation and the
- *     displayed circuit.
- * @property {Object | undefined} completed The completed simulation as panels sample it
- *     (useCompletedResult); each new sample repaints the figures.
- * @property {import("./analyzerModel.js").BlochTarget | undefined} target
- * @property {import("./analyzerModel.js").ViewMode} mode
- * @property {import("./analyzerModel.js").Layers} layers
- * @property {string | undefined} focusAxis
- * @property {import("./analyzerModel.js").Step[]} steps
- * @property {number | undefined} currentStep
- */
-
-/**
- * The analyzer's four canvases - sphere, meridian, equator, steps - kept drawn: after a simulation
- * sample, a resize, a switch, a held axis, a chosen step or an explored state, and while the sphere
- * is dragged round. The canvases stay imperative, their painters drawing into them, so React only
- * holds their refs. What the painters show comes back as the readout.
- *
- * A time-dependent circuit completes a simulation every frame, but the figures follow the sampled
- * result every panel reads (useCompletedResult): four figures redrawn each frame held the whole app
- * to a fraction of its frame rate.
- *
- * Each canvas a painter draws into gets a render surface of its own - a scene, drawn by the renderer
- * every such surface shares (src/draw/surface/SharedRenderer.js) - which lives until it is released.
- * The figures release theirs when the panel closes and when a canvas is replaced; the last surface
- * released takes the shared renderer, its WebGL context and its pointer listener on the whole
- * document along. A browser keeps only a few contexts alive, and past that it drops the oldest,
- * which can be the circuit's own, so the figures must not hold one each.
- *
- * When the state shown changes at once - another step, back from a free state, an edited circuit -
- * the arrow glides to it along the sphere over the user's glide duration, landing on the state as it is
- * then, so a running circuit's arrow is caught up with rather than left behind. With Reduce Motion
- * on it lands there at once.
- *
- * Closes the panel when the sphere it was opened for has gone from the circuit.
- *
- * @param {BlochFiguresInputs} inputs
- */
+/** Circuit selection belongs here; the shared view owns drawing, camera and surface cleanup. */
 function useBlochFigures({
   deps,
   completed,
@@ -75,297 +16,59 @@ function useBlochFigures({
   steps,
   currentStep,
 }) {
-  const sphereRef = useRef(/** @type {HTMLCanvasElement | null} */ (null));
-  const meridianRef = useRef(/** @type {HTMLCanvasElement | null} */ (null));
-  const equatorRef = useRef(/** @type {HTMLCanvasElement | null} */ (null));
-  const stripRef = useRef(/** @type {HTMLCanvasElement | null} */ (null));
-  const viewRef = useRef({ ...DEFAULT_VIEW });
-  const shownVector = useRef(
-    /** @type {import("./analyzerModel.js").BlochVector | undefined} */ (
-      undefined
-    ),
+  const density = useMemo(
+    () =>
+      target && deps ? densityMatrixOf(deps, completed, target) : undefined,
+    [deps, completed, target],
   );
-  const modeRef = useRef(mode);
-  const stepsRef = useRef(steps);
-  const completedRef = useRef(completed);
-  const optionsRef = useRef({ layers, focusAxis });
-  const sourceRef = useRef(
-    /** @type {import("./analyzerModel.js").ShownSource | undefined} */ (
-      undefined
-    ),
-  );
-  const glideRef = useRef(
-    /** @type {{ from: import("./analyzerModel.js").BlochVector, start: number, duration: number } | undefined} */ (
-      undefined
-    ),
-  );
-  const glideFrame = useRef(
-    /** @type {(() => void) | undefined} */ (undefined),
-  );
-  const repaintRef = useRef(() => {});
-  // Every canvas painted into, so its surface can be released once it is gone.
-  const paintedCanvases = useRef(
-    /** @type {Set<HTMLCanvasElement>} */ (new Set()),
-  );
-  const [readout, setReadout] = useState(
-    /** @type {import("./analyzerModel.js").PanelReadout | null | undefined} */ (
-      undefined
-    ),
-  );
-  // Whether the sphere has been turned from the default view, so a Reset view can be offered.
-  const [rotated, setRotated] = useState(false);
-
-  // A fresh sphere is shown from the default view.
   useEffect(() => {
-    viewRef.current = { ...DEFAULT_VIEW };
-    setRotated(false);
-  }, [target]);
-
-  const repaint = useMemo(() => {
-    return () => {
-      const canvas = sphereRef.current;
-      if (canvas === null || deps === undefined) return;
-      const shown = modeRef.current;
-      let vec;
-      if (shown.kind === "explore") {
-        vec = shown.vec;
-      } else {
-        if (target === undefined) return;
-        // The arrow comes from the sample the steps come from, so a time-dependent gate shows both
-        // at one phase. A sample can trail an edit; only the simulator's newest result says the
-        // sphere has gone.
-        const densityMatrix = densityMatrixOf(
-          deps,
-          completedRef.current,
-          target,
-        );
-        if (densityMatrix === undefined) {
-          if (
-            densityMatrixOf(deps, deps.completed.getState().value, target) ===
-            undefined
-          ) {
-            appStore.setState({ blochTarget: undefined });
-            closePanel("bloch");
-          }
-          return;
-        }
-        vec =
-          shown.kind === "step"
-            ? stepsRef.current[shown.index]?.vec
-            : densityMatrix.hasNaN()
-              ? undefined
-              : blochCoordinates(densityMatrix);
-      }
-
-      // The step followed is part of where the state comes from, so the playhead moving glides the
-      // arrow there as choosing a step does.
-      const source = {
-        target,
-        kind: shown.kind,
-        index:
-          shown.kind === "step"
-            ? shown.index
-            : shown.kind === "circuit"
-              ? currentStep
-              : undefined,
-        circuit: completedRef.current?.circuit,
-      };
-      if (
-        glidesBetween(sourceRef.current, source) &&
-        shownVector.current !== undefined &&
-        vec !== undefined &&
-        !prefersReducedMotion()
-      ) {
-        // The glide keeps the duration it started with, whatever the setting does meanwhile.
-        glideRef.current = {
-          from: shownVector.current,
-          start: clock.now(),
-          duration: (deps.settings ?? motionSettings).getState().glideMs,
-        };
-      }
-      sourceRef.current = source;
-      const glide = glideRef.current;
-      const progress =
-        glide === undefined || glide.duration <= 0
-          ? 1
-          : Math.min(1, (clock.now() - glide.start) / glide.duration);
-      if (glide !== undefined && vec !== undefined && progress < 1) {
-        vec = blochVectorBetween(
-          glide.from,
-          vec,
-          Animation.GLIDE_EASING(progress),
-        );
-        if (glideFrame.current === undefined) {
-          glideFrame.current = clock.after(0, () => {
-            glideFrame.current = undefined;
-            repaintRef.current();
-          });
-        }
-      } else {
-        glideRef.current = undefined;
-      }
-      shownVector.current = vec;
-      const { yaw, pitch } = viewRef.current;
-      const reading = vec === undefined ? undefined : blochReading(vec);
-      const options = { ...optionsRef.current, reading };
-      // A canvas React replaced - the strip's, when the steps come and go - takes its surface along.
-      const canvases = [
-        canvas,
-        meridianRef.current,
-        equatorRef.current,
-        stripRef.current,
-      ];
-      for (const painted of paintedCanvases.current) {
-        if (!canvases.includes(painted)) {
-          paintedCanvases.current.delete(painted);
-          void RenderSurface.release(painted);
-        }
-      }
-      for (const current of canvases) {
-        if (current !== null) paintedCanvases.current.add(current);
-      }
-      drawBlochScene(canvas, vec, yaw, pitch, options);
-      if (meridianRef.current !== null) {
-        drawBlochProjection(meridianRef.current, vec, "meridian", options);
-      }
-      if (equatorRef.current !== null) {
-        drawBlochProjection(equatorRef.current, vec, "equator", options);
-      }
-      if (stripRef.current !== null) {
-        const selected =
-          shown.kind === "step"
-            ? shown.index
-            : shown.kind === "circuit"
-              ? currentStep
-              : undefined;
-        drawBlochStrip(
-          stripRef.current,
-          stepsRef.current.map((step) => step.vec),
-          { selected, yaw, pitch },
-        );
-      }
-      setReadout(vec === undefined ? null : panelReadout(vec, reading));
-    };
-  }, [deps, target, currentStep]);
-  repaintRef.current = repaint;
-  useEffect(() => onColourSchemeChange(() => repaintRef.current()), []);
-
-  // A glide still under way stops with the panel, and the figures' surfaces go with it.
-  useEffect(() => {
-    const painted = paintedCanvases.current;
-    return () => {
-      glideFrame.current?.();
-      for (const canvas of painted) void RenderSurface.release(canvas);
-      painted.clear();
-    };
-  }, []);
-
-  // A new simulation sample, a switch, a held axis, a chosen step or an explored state redraws the
-  // same figures.
-  useEffect(() => {
-    optionsRef.current = { layers, focusAxis };
-    modeRef.current = mode;
-    stepsRef.current = steps;
-    completedRef.current = completed;
-    repaint();
-  }, [completed, layers, focusAxis, mode, steps, repaint]);
-
-  // The panel can be resized without a new sample, and that means repaint too.
-  useEffect(() => {
-    if (deps === undefined) {
-      return undefined;
-    }
-    const observer =
-      typeof ResizeObserver === "undefined"
-        ? undefined
-        : new ResizeObserver(() => repaint());
-    for (const element of [
-      sphereRef.current,
-      meridianRef.current,
-      equatorRef.current,
-      stripRef.current,
-    ]) {
-      if (observer !== undefined && element !== null) observer.observe(element);
-    }
-    return () => observer?.disconnect();
-  }, [deps, repaint]);
-
-  // Drag rotates the view; pointer events so touch drags work the same way.
-  /** @param {import("react").PointerEvent<HTMLCanvasElement>} event */
-  const onPointerDown = (event) => {
     if (
-      !event.isPrimary ||
-      (event.pointerType === "mouse" && event.button !== 0)
+      mode.kind !== "explore" &&
+      target &&
+      deps &&
+      completed &&
+      density === undefined &&
+      densityMatrixOf(deps, deps.completed.getState().value, target) ===
+        undefined
     ) {
-      return;
+      appStore.setState({ blochTarget: undefined });
+      closePanel("bloch");
     }
-    event.currentTarget.setPointerCapture(event.pointerId);
-    event.preventDefault();
-  };
-  /**
-   * Turns the view, the way the surface under a finger turns: a drag right swings the near side
-   * right, a drag down tips the near side down and the top toward the reader.
-   * @param {number} yawBy @param {number} pitchBy In radians.
-   */
-  const turn = (yawBy, pitchBy) => {
-    const view = viewRef.current;
-    view.yaw -= yawBy;
-    view.pitch = Math.max(
-      Math.PI * -0.49,
-      Math.min(Math.PI * 0.49, view.pitch + pitchBy),
-    );
-    setRotated(true);
-    repaint();
-  };
-  /** @param {import("react").PointerEvent<HTMLCanvasElement>} event */
-  const onPointerMove = (event) => {
-    const canvas = event.currentTarget;
-    if (!canvas.hasPointerCapture(event.pointerId)) {
-      return;
-    }
-    const cssSize = Math.max(1, canvas.clientWidth);
-    turn(
-      (event.movementX * Math.PI) / cssSize,
-      (event.movementY * Math.PI) / cssSize,
-    );
-  };
-  /** The arrow keys turn the sphere 15° a press; Home puts it back. */
-  /** @param {import("react").KeyboardEvent<HTMLCanvasElement>} event */
-  const onKeyDown = (event) => {
-    const step = Math.PI / 12;
-    const turns = {
-      ArrowLeft: [-step, 0],
-      ArrowRight: [step, 0],
-      ArrowUp: [0, -step],
-      ArrowDown: [0, step],
-    };
-    if (event.key === "Home") {
-      event.preventDefault();
-      resetView();
-    } else if (turns[event.key] !== undefined) {
-      event.preventDefault();
-      turn(...turns[event.key]);
-    }
-  };
-  const resetView = () => {
-    viewRef.current = { ...DEFAULT_VIEW };
-    setRotated(false);
-    repaint();
-  };
-
-  return {
-    sphereRef,
-    meridianRef,
-    equatorRef,
-    stripRef,
-    readout,
-    shownVector,
-    rotated,
-    resetView,
-    onPointerDown,
-    onPointerMove,
-    onKeyDown,
-  };
+  }, [mode.kind, target, deps, completed, density]);
+  const vector = useMemo(
+    () =>
+      mode.kind === "explore"
+        ? mode.vec
+        : mode.kind === "step"
+          ? steps[mode.index]?.vec
+          : density && !density.hasNaN()
+            ? blochCoordinates(density)
+            : undefined,
+    [mode, steps, density],
+  );
+  const selectedStep =
+    mode.kind === "step"
+      ? mode.index
+      : mode.kind === "circuit"
+        ? currentStep
+        : undefined;
+  const source = useMemo(
+    () => ({
+      target,
+      kind: mode.kind,
+      index: selectedStep,
+      circuit: completed?.circuit,
+    }),
+    [target, mode.kind, selectedStep, completed?.circuit],
+  );
+  return useBlochView({
+    vector,
+    source,
+    layers,
+    focusAxis,
+    steps,
+    selectedStep,
+    settings: deps?.settings,
+  });
 }
-
 export { useBlochFigures };

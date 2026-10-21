@@ -8,6 +8,7 @@ import { ControlRow } from "./control-row.jsx";
  * @typedef {typeof BLOCH_PRESETS[number]} Preset
  *
  * @typedef {object} ExploreControlsProps
+ * @property {string=} idPrefix Unique prefix when embedded; the standalone panel retains its IDs.
  * @property {string | undefined} activePreset The preset being explored, if any.
  * @property {boolean} canReturn Whether there is a circuit state to go back to.
  * @property {(preset: Preset) => void} onPreset
@@ -15,8 +16,6 @@ import { ControlRow } from "./control-row.jsx";
  * @property {import("./analyzerModel.js").Angles} angles
  * @property {(thetaDegrees: number, phiDegrees: number) => void} onAngles
  */
-
-const ANGLE_REASON_ID = "bloch-angle-reason";
 
 /**
  * Why an angle control is switched off, said plainly, or undefined while both angles exist.
@@ -34,8 +33,8 @@ function angleReason(angles) {
 }
 
 /** @param {string} name @returns {string} The preset button's id: |−i⟩ becomes bloch-preset-−i. */
-const presetId = (name) =>
-  `bloch-preset-${name === "Mixed" ? "mixed" : name.replace(/[|⟩]/g, "")}`;
+const presetId = (idPrefix, name) =>
+  `${idPrefix}-preset-${name === "Mixed" ? "mixed" : name.replace(/[|⟩]/g, "")}`;
 
 /**
  * The controls that put a free state in the analyzer: the preset poles and centre, and θ and ϕ as
@@ -44,6 +43,7 @@ const presetId = (name) =>
  * @param {ExploreControlsProps} props
  */
 function ExploreControls({
+  idPrefix = "bloch",
   activePreset,
   canReturn,
   onPreset,
@@ -58,7 +58,7 @@ function ExploreControls({
           {BLOCH_PRESETS.map((preset) => (
             <Button
               key={preset.name}
-              id={presetId(preset.name)}
+              id={presetId(idPrefix, preset.name)}
               aria-pressed={activePreset === preset.name}
               onClick={() => onPreset(preset)}
             >
@@ -67,35 +67,35 @@ function ExploreControls({
           ))}
         </ButtonGroup>
         {canReturn && (
-          <Button id="bloch-back-to-circuit" onClick={onReturn}>
+          <Button id={`${idPrefix}-back-to-circuit`} onClick={onReturn}>
             Back to circuit
           </Button>
         )}
       </ControlRow>
       <ControlRow label="Angles">
         <AngleControl
-          id="bloch-theta-input"
+          id={`${idPrefix}-theta-input`}
           symbol="θ"
           name="Polar angle θ"
           max={180}
           value={angles.theta}
           defined={angles.thetaDefined}
-          describedBy={ANGLE_REASON_ID}
+          describedBy={`${idPrefix}-angle-reason`}
           onChange={(theta) => onAngles(theta, angles.phi)}
         />
         <AngleControl
-          id="bloch-phi-input"
+          id={`${idPrefix}-phi-input`}
           symbol="ϕ"
           name="Azimuth ϕ"
           max={360}
           value={angles.phi}
           defined={angles.phiDefined}
-          describedBy={ANGLE_REASON_ID}
+          describedBy={`${idPrefix}-angle-reason`}
           onChange={(phi) => onAngles(angles.theta, phi)}
         />
       </ControlRow>
       {angleReason(angles) !== undefined && (
-        <p id={ANGLE_REASON_ID} className="bloch-note">
+        <p id={`${idPrefix}-angle-reason`} className="bloch-note">
           {angleReason(angles)}
         </p>
       )}

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { Button } from "../../ui/button.jsx";
 import { notify } from "../../ui/toasts.jsx";
 
 /** Generate before awaiting the clipboard, so the click keeps its intended data. */
@@ -54,9 +55,9 @@ function CopyButton({
   };
   return (
     <div className="panel-action-row">
-      <button id={id} type="button" disabled={pending} onClick={copy}>
+      <Button variant="outline" id={id} disabled={pending} onClick={copy}>
         {label}
-      </button>
+      </Button>
       <span id={resultId} className="copy-result">
         {pending ? "Copying…" : ""}
       </span>

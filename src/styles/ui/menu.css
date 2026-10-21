@@ -40,8 +40,10 @@
   background: var(--accent);
 }
 
-.app-menu-item[data-checked]::after {
-  content: "✓";
+/* A checked item's mark, at the item's end; Base UI mounts it only while the item is checked. */
+.app-menu-item-check {
+  display: inline-flex;
+  flex: none;
   color: var(--muted-foreground);
 }
 

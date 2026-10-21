@@ -16,13 +16,13 @@
 
 import { Complex } from "../math/complex/Complex.js";
 import { Matrix } from "../math/matrix/Matrix.js";
-import { blochCoordinates } from "../math/bloch.js";
+import { blochCoordinates, blochReading } from "../math/bloch.js";
 
 /**
  * What each qubit looks like on its own: the state with every other qubit traced out.
  *
- * The simulator only reports a single qubit's density matrix where a Bloch display sits, so this
- * derives it from the full state instead. For qubit q it sums, over every setting of the other
+ * Intermediate steps without a display have no cached density matrices, so this derives them
+ * from the full state. For qubit q it sums, over every setting of the other
  * qubits, the pair of amplitudes that differ only in q - O(n·2^n), fine for the sizes a state
  * table shows.
  *
@@ -36,6 +36,12 @@ import { blochCoordinates } from "../math/bloch.js";
  *     purity: !number}>}
  */
 function qubitMarginals(state, wireCount, measuredMask = 0) {
+  if (
+    !state ||
+    !(state.norm2() > 1e-12) ||
+    !state.rawBuffer().every(Number.isFinite)
+  )
+    return [];
   const buf = state.rawBuffer();
   const size = 1 << wireCount;
   const marginals = [];
@@ -77,26 +83,31 @@ function qubitMarginals(state, wireCount, measuredMask = 0) {
       new Complex(rho01r, -rho01i),
       new Complex(rho11, 0),
     );
+    const bloch = blochCoordinates(density);
     marginals.push({
       wire,
       probabilityOne: rho11,
-      bloch: blochCoordinates(density),
-      purity:
-        rho00 * rho00 + rho11 * rho11 + 2 * (rho01r * rho01r + rho01i * rho01i),
+      bloch,
+      purity: blochReading(bloch).purity,
     });
   }
   return marginals;
 }
 
-function qubitReadings(stats, wireCount) {
-  return Array.from({ length: wireCount }, (_, wire) => {
-    const density = stats.qubitDensityMatrix(Infinity, wire);
-    const bloch = blochCoordinates(density);
+/** Physical readings at a display's column and wire range, or at the output by default. */
+function qubitReadings(stats, wireCount, column = Infinity, start = 0) {
+  if (!stats) return [];
+  return Array.from({ length: wireCount }, (_, offset) => {
+    const wire = start + offset;
+    const density = stats.qubitDensityMatrix(column, wire);
+    const bloch = density?.rawBuffer().every(Number.isFinite)
+      ? blochCoordinates(density)
+      : { x: NaN, y: NaN, z: NaN };
     return {
       wire,
       bloch,
       probabilityOne: (1 - bloch.z) / 2,
-      purity: (1 + bloch.x ** 2 + bloch.y ** 2 + bloch.z ** 2) / 2,
+      purity: blochReading(bloch).purity,
     };
   });
 }

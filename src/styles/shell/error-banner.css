@@ -40,39 +40,4 @@
     color: var(--muted-foreground);
     font-family: var(--font-mono);
   }
-
-  /* Buttons and the report link alike are at least the 28-point target a touch or a click can
-       land on without care. */
-  .error-banner-button {
-    display: inline-flex;
-    flex-shrink: 0;
-    align-items: center;
-    box-sizing: border-box;
-    min-height: 28px;
-    padding: 3px calc(var(--spacing) * 2);
-    border: var(--border-width) solid var(--border);
-    border-radius: 7px;
-    background: transparent;
-    color: var(--foreground);
-    font: inherit;
-    font-size: 0.75rem;
-    cursor: pointer;
-    text-decoration: none;
-  }
-
-  .error-banner-button:hover {
-    background: var(--accent);
-  }
-
-  .error-banner-dismiss {
-    min-width: 28px;
-    justify-content: center;
-    border: none;
-    line-height: 1;
-  }
-
-  .error-banner-dismiss svg {
-    width: 14px;
-    height: 14px;
-  }
 }

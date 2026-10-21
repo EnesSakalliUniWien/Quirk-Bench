@@ -349,6 +349,9 @@ function parseAmplitudes(text, span) {
   }
   const amplitudes = [];
   for (const part of parts) {
+    if (/[+*/^-]\s*(?:\)|$)/.test(part)) {
+      return { error: `Complete the amplitude expression '${part}'.` };
+    }
     let value;
     try {
       value = ComplexFormula.parse(part === "" ? "0" : part);
@@ -360,13 +363,13 @@ function parseAmplitudes(text, span) {
     }
     amplitudes.push([value.real, value.imag]);
   }
-  const norm = Math.sqrt(
-    amplitudes.reduce((sum, [re, im]) => sum + re * re + im * im, 0),
-  );
-  if (norm === 0) {
+  const scale = Math.max(...amplitudes.flat().map(Math.abs));
+  if (scale === 0) {
     return { error: "At least one amplitude must be nonzero." };
   }
-  return { amplitudes: amplitudes.map(([re, im]) => [re / norm, im / norm]) };
+  const scaled = amplitudes.map(([re, im]) => [re / scale, im / scale]);
+  const norm = Math.hypot(...scaled.flat());
+  return { amplitudes: scaled.map(([re, im]) => [re / norm, im / norm]) };
 }
 
 /**
@@ -424,8 +427,9 @@ PrepareGates.AmplitudesFamily = Gate.buildFamily(
       .setRenderer(prepareRenderer((gate) => gate.symbol, true))
       .setParamDialog({
         title: "Enter the amplitudes to prepare.",
+        editor: "amplitudes",
         message:
-          `${1 << span} amplitudes separated by commas, one per basis state from |${"0".repeat(span)}⟩ ` +
+          `${1 << span} amplitudes, one per basis state from |${"0".repeat(span)}⟩ ` +
           `up, the first wire as the lowest bit. Formulas such as 1/sqrt(2) and -i work.`,
         applyText: (oldGate, text) => {
           const parsed = parseAmplitudes(text, span);

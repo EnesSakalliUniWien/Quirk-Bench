@@ -21,6 +21,8 @@ const Animation = Object.freeze({
   GLIDE_EASING: easeInOut,
   // Panels follow the simulation no faster than this, however fast the canvas redraws.
   PANEL_SAMPLE_COOLDOWN_MS: 100,
+  // A reached measurement or changed result settles quickly; it never drives the simulator.
+  MEASUREMENT_FEEDBACK_DURATION_MS: 180,
 });
 
 export { Animation, easeInOut };

@@ -32,11 +32,6 @@
     gap: 8px;
   }
 
-  .math-entry-actions button {
-    font-size: 11px;
-    padding: 3px 6px;
-  }
-
   .math-keyboard-host {
     position: relative;
     transform: translateZ(0);

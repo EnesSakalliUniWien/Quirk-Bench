@@ -4,6 +4,7 @@ import { CircuitGeometry } from "../../../../src/editor/geometry/CircuitGeometry
 import { Layout } from "../../../../src/config/Layout.js";
 import { CanvasTheme } from "../../../../src/config/CanvasTheme.js";
 import { DisplayView } from "../../../draw/scene/TestDisplayView.js";
+import { Point } from "../../../../src/geometry/Point.js";
 import { Rect } from "../../../../src/geometry/Rect.js";
 import { Matrix } from "../../../../src/engine/math/matrix/Matrix.js";
 import {
@@ -105,6 +106,26 @@ suite.test(
       assertThat(drawn)
         .withInfo({ label })
         .isApproximatelyEqualTo(Math.atan2(p.sy, p.sx), 0.05);
+    }
+  },
+);
+
+suite.test(
+  "mixed-state tooltips distinguish a direction from the maximally mixed centre",
+  () => {
+    const bounds = new Rect(0, 0, 100, 100);
+    for (const [r, directionless] of [
+      [0, true],
+      [0.5, false],
+      [0.9987, false],
+      [1, false],
+    ]) {
+      const painter = new DisplayView(document.createElement("canvas"));
+      const density = Matrix.square((1 + r) / 2, 0, 0, (1 - r) / 2);
+      paintBlochSphereDisplay(painter, density, bounds, [new Point(50, 40)]);
+      const text = painter.tooltips.pending[0].content.valueText;
+      assertThat(text.includes("no Bloch direction")).isEqualTo(directionless);
+      assertThat(text.includes("mixed")).isEqualTo(r < 1);
     }
   },
 );

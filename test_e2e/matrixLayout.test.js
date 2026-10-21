@@ -250,7 +250,7 @@ test("Forge shares written matrices, preserves parsing and previews non-unitary 
     await page.waitForSelector("#gate-forge-matrix-canvas mtable");
     assert.equal(
       await page.$$eval(
-        ".forge-operation-preview .rotation-figure",
+        ".forge-operation-preview .shared-bloch-analysis > summary",
         (e) => e.length,
       ),
       1,

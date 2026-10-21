@@ -41,6 +41,7 @@ export function paintCircuit(
   const geometry = circuit.geometry();
   const context = {
     definition: circuit.circuitDefinition,
+    playheadStep,
     geometry,
     highlightedSlot: circuit.highlightedSlot,
     highlightStatusAt: (col, row, points) =>

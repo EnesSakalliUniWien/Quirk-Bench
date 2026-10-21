@@ -17,6 +17,7 @@
 import { Suite, assertThat, assertTrue } from "../../TestUtil.js";
 import {
   EPSILON,
+  PURE_STATE_THRESHOLD,
   BLOCH_PRESETS,
   blochCoordinates,
   blochReading,
@@ -426,3 +427,20 @@ suite.test(
     assertThat(degreesText(Math.PI)).isEqualTo("180.0°");
   },
 );
+
+suite.test("purity classification uses the unrounded Bloch radius", () => {
+  for (const r of [0, 0.5, 0.9987, PURE_STATE_THRESHOLD, 0.9991, 1]) {
+    const reading = blochReading({ x: r, y: 0, z: 0 });
+    const isPure = r > PURE_STATE_THRESHOLD;
+    assertThat(reading.isPure).isEqualTo(isPure);
+    assertThat(reading.purity).isApproximatelyEqualTo((1 + r * r) / 2);
+    assertThat(analyzerReadout({ x: r, y: 0, z: 0 }).isPure).isEqualTo(isPure);
+    assertThat(blochAmplitudes(reading).alpha === undefined).isEqualTo(!isPure);
+    assertThat(reading.theta === undefined).isEqualTo(r === 0);
+  }
+  const polarMixed = blochReading({ x: 0, y: 0, z: 0.5 });
+  assertThat(polarMixed.rule).isEqualTo("polar");
+  assertThat(polarMixed.isPure).isEqualTo(false);
+  assertThat(polarMixed.theta).isEqualTo(0);
+  assertThat(polarMixed.phi).isEqualTo(undefined);
+});

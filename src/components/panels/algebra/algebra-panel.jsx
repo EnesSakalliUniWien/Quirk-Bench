@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef } from "react";
+import { BlochAnalysis } from "../../math/bloch-analysis.jsx";
+import { qubitMarginals } from "../../../engine/simulation/qubitMarginals.js";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useStore } from "zustand";
 import { bin } from "../../../base/Format.js";
 import { prefersReducedMotion } from "../../../browser/reducedMotion.js";
@@ -53,6 +55,21 @@ function AlgebraPanel() {
         ? undefined
         : (index) => ketLabel(registers, shownWires, index),
     [registers, shownWires],
+  );
+
+  const getBlochStates = useCallback(
+    () =>
+      algebra.states.map((state, index) => ({
+        label:
+          index === 0 ? "Before the first column" : `After column ${index}`,
+        registers,
+        qubits: qubitMarginals(
+          state,
+          algebra.wireCount,
+          circuit.colIsMeasuredMask(index),
+        ),
+      })),
+    [algebra, circuit, registers],
   );
 
   // Move with the playhead: whenever it steps, bring its card to the middle of the track. Only on
@@ -153,6 +170,8 @@ function AlgebraPanel() {
         current={current}
         formatKet={formatKet}
       />
+
+      <BlochAnalysis getStates={getBlochStates} />
 
       {/* Focusable so the arrow keys scroll it: a region you can only scroll with a mouse is not
           one everyone can scroll. */}

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Button } from "../ui/button.jsx";
 import { toMathFieldValue, toQuirkExpression } from "./math-field-value.js";
 
 /** Rich notation is opt-in; opening it never rewrites the user's raw expression. */
@@ -12,6 +13,7 @@ export function MathField({
   invalid = false,
   describedBy,
   onKeyboardShow,
+  onPaste,
 }) {
   const [rich, setRich] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -113,6 +115,7 @@ export function MathField({
           aria-label={label}
           aria-invalid={invalid || !!error}
           aria-describedby={describedBy}
+          onPaste={onPaste}
           onKeyDown={(event) => {
             if (event.nativeEvent.isComposing) {
               if (event.key === "Enter") event.preventDefault();
@@ -149,6 +152,7 @@ export function MathField({
           aria-describedby={describedBy}
           autoComplete="off"
           spellCheck={false}
+          onPaste={onPaste}
           onChange={(event) => {
             setError("");
             onChange(event.target.value);
@@ -156,8 +160,10 @@ export function MathField({
         />
       )}
       <div className="math-entry-actions">
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           disabled={loading}
           onClick={() =>
             rich
@@ -166,10 +172,12 @@ export function MathField({
           }
         >
           {loading ? "Loading…" : rich ? "Raw expression" : "Math input"}
-        </button>
+        </Button>
         {rich && (
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
             aria-expanded={keyboardHeight > 0}
             onClick={() => {
               const keyboard = window.mathVirtualKeyboard;
@@ -186,7 +194,7 @@ export function MathField({
             }}
           >
             Math keyboard
-          </button>
+          </Button>
         )}
       </div>
       {error && (

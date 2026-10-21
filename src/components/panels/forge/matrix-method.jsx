@@ -3,6 +3,7 @@ import { GatePreview } from "../../gate/gate-preview.jsx";
 import { useDraftPreview } from "./useDraftPreview.js";
 import { inputKey } from "./inputs.js";
 import { buildMatrixGate } from "./construction.js";
+import { Button } from "../../ui/button.jsx";
 
 /** Rotation and matrix methods share one operation preview and one commit path. */
 export function MatrixMethod({
@@ -76,16 +77,30 @@ export function MatrixMethod({
         </div>
       </div>
       <footer className="construction-actions">
-        <button type="button" onClick={onCancel}>
+        {(result.pending || result.error) && (
+          <p
+            id={`${prefix}-status`}
+            className={result.error ? "field-error" : "field-description"}
+          >
+            {result.pending
+              ? "Checking the operation…"
+              : `Cannot create gate: ${result.error}`}
+          </p>
+        )}
+        <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           id={`${prefix}-button`}
           type="submit"
+          variant="primary"
           disabled={result.pending || !result.value}
+          aria-describedby={
+            result.pending || result.error ? `${prefix}-status` : undefined
+          }
         >
           Create gate
-        </button>
+        </Button>
       </footer>
     </form>
   );

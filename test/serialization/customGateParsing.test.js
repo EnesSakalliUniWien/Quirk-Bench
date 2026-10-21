@@ -80,6 +80,10 @@ suite.test("parseUserMatrix", () => {
 });
 
 suite.test("parseUserRotation", () => {
+  for (const axis of ["1e200X", "1e-200X", "1e308X"])
+    assertThat(parseUserRotation("180", "0", axis)).isEqualTo(
+      parseUserRotation("180", "0", "X"),
+    );
   const s = Math.sqrt(0.5);
   const si = new Complex(0, s);
   assertThat(parseUserRotation("180", "90", "X")).isEqualTo(

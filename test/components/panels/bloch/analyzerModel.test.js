@@ -4,6 +4,7 @@ import {
   anglesOf,
   glidesBetween,
   panelReadout,
+  stateSummary,
   subtitleFor,
 } from "../../../../src/components/panels/bloch/analyzerModel.js";
 import { Registers } from "../../../../src/circuit/model/Registers.js";
@@ -167,3 +168,17 @@ suite.test("an angle the state lacks leaves its control empty", () => {
     phiDefined: false,
   });
 });
+
+suite.test(
+  "spoken mixed classification survives radius rounding at the pure boundary",
+  () => {
+    for (const r of [0.9987, 0.999, 0.9991]) {
+      const readout = panelReadout({ x: r, y: 0, z: 0 });
+      assertThat(readout.length).isEqualTo("0.999");
+      assertThat(stateSummary("q0", readout).includes(", mixed")).isEqualTo(
+        r <= 0.999,
+      );
+      assertThat(readout.state.startsWith("mixed")).isEqualTo(r <= 0.999);
+    }
+  },
+);

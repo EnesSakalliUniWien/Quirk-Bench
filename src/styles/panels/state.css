@@ -26,6 +26,114 @@
     letter-spacing: -0.015em;
   }
 
+  .state-measurements {
+    flex: 0 1 auto;
+    min-height: 0;
+    max-height: 55%;
+    margin-bottom: calc(var(--spacing) * 3);
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .state-measurements h3 {
+    margin: 0 0 calc(var(--spacing) * 2);
+    font-size: var(--text-small);
+    font-weight: 650;
+  }
+
+  .measurement-readings {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .measurement-reading {
+    padding: calc(var(--spacing) * 3) 0;
+    border-bottom: var(--border-width) solid var(--border);
+    font-size: var(--text-small);
+  }
+
+  .measurement-reading:first-child {
+    padding-top: 0;
+  }
+
+  .measurement-reading-header {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 2);
+  }
+
+  .measurement-reading-symbol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 1.75rem;
+    flex: 0 0 auto;
+  }
+
+  .measurement-reading-identity {
+    display: grid;
+    flex: 1 1 12rem;
+    gap: var(--spacing);
+    overflow-wrap: anywhere;
+  }
+
+  .measurement-reading-identity > span,
+  .measurement-state-help {
+    color: var(--muted-foreground);
+    font-size: var(--text-caption);
+  }
+
+  .measurement-result {
+    display: inline-block;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .measurement-reading[data-status="click"] .measurement-result {
+    color: var(--state-probability-fill);
+  }
+
+  .measurement-reading-details {
+    margin-top: calc(var(--spacing) * 2);
+    line-height: 1.5;
+  }
+
+  .measurement-reading-details > summary {
+    width: fit-content;
+    min-height: 24px;
+    cursor: pointer;
+    text-underline-offset: 3px;
+  }
+
+  .measurement-reading-details > summary:hover {
+    text-decoration: underline;
+  }
+
+  .measurement-reading-details > summary:focus-visible {
+    outline: var(--border-width-focus) solid var(--focus-outline);
+    outline-offset: 2px;
+    border-radius: var(--radius-small);
+  }
+
+  .measurement-reading-details > p {
+    margin: calc(var(--spacing) * 2) 0;
+  }
+
+  .measurement-state-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: calc(var(--spacing) * 2);
+  }
+
+  @media (any-pointer: coarse) {
+    .measurement-reading-details > summary {
+      min-height: 44px;
+      align-content: center;
+    }
+  }
+
   .state-summary {
     color: var(--muted-foreground);
     font-family: var(--font-mono);
@@ -61,6 +169,11 @@
     overflow-anchor: none;
     border: var(--border-width) solid var(--border);
     border-radius: 10px;
+  }
+
+  .state-table-scroll:focus-visible {
+    outline: var(--border-width-focus) solid var(--focus-outline);
+    outline-offset: -2px;
   }
 
   /* Fixed, so a column keeps its width however far the rows scroll: only the rows in view are

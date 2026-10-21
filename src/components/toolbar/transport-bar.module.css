@@ -79,18 +79,6 @@
     min-width: 7.25rem;
   }
 
-  /* Filled in the primary ink, the one prominent button on the bar; every other control is a
-       ghost beside it. */
-  .lane .prominent {
-    color: var(--primary-foreground);
-    background: var(--primary);
-  }
-
-  .lane .prominent:hover {
-    color: var(--primary-foreground);
-    background: var(--panel-primary-hover);
-  }
-
   .forward {
     grid-column: forward;
     justify-self: start;

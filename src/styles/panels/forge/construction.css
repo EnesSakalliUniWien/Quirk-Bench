@@ -31,16 +31,8 @@
     padding: 0 18px 12px;
     border-bottom: var(--border-width) solid var(--border);
   }
-  .construction-tabs button {
+  .construction-tabs .ui-button {
     flex: 1;
-    padding: 8px;
-  }
-  .construction-tabs [data-active],
-  .entry-modes [aria-pressed="true"],
-  .axis-presets [aria-pressed="true"] {
-    background: var(--primary);
-    color: var(--primary-foreground);
-    border-color: var(--foreground);
   }
   .construction-tab-panel {
     min-height: 0;
@@ -142,9 +134,8 @@
     font-size: 13px;
     margin-bottom: 6px;
   }
-  .axis-presets button {
+  .axis-presets .ui-button {
     flex: 1;
-    padding: 7px;
   }
   .construction-preview {
     display: grid;
@@ -165,24 +156,13 @@
     border-top: var(--border-width) solid var(--border);
     background: var(--card);
   }
-  .construction-actions button {
-    min-height: 36px;
-    padding: 8px 12px;
-  }
-  .construction-actions button[type="submit"] {
-    font-weight: 650;
-  }
-  .construction-actions button:disabled {
-    opacity: 0.45;
+  .construction-actions > :is(.field-error, .field-description) {
+    flex-basis: 100%;
   }
   .entry-modes {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-  }
-  .entry-modes button {
-    padding: 5px 8px;
-    font-size: 12px;
   }
   .matrix-input-scroll {
     overflow: auto;
@@ -197,6 +177,27 @@
     width: 76px;
     padding: 6px;
     font-family: monospace;
+  }
+  .matrix-input-grid input[data-active="true"] {
+    border-color: var(--foreground);
+    outline: 1px solid var(--foreground);
+    outline-offset: 1px;
+  }
+  .matrix-input-grid input[aria-invalid="true"] {
+    border-color: var(--destructive);
+  }
+  .matrix-paste {
+    display: grid;
+    gap: 8px;
+    min-width: 0;
+  }
+  .matrix-paste summary {
+    cursor: pointer;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+  .matrix-paste[open] > :not(summary) {
+    margin-top: 8px;
   }
   .matrix-input-grid th {
     font-size: 11px;

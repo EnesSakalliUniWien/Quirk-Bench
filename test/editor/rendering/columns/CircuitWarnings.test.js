@@ -3,13 +3,39 @@ import {
   DisplayView,
   scenePixels,
 } from "../../../draw/scene/TestDisplayView.js";
-import { drawGate_disabledReason } from "../../../../src/editor/rendering/columns/CircuitWarnings.js";
+import {
+  drawGate_disabledReason,
+  drawColumnSurvivalRate,
+} from "../../../../src/editor/rendering/columns/CircuitWarnings.js";
 import { rectangle } from "../../../../src/draw/shapes/ShapeView.js";
 import { CanvasTheme } from "../../../../src/config/CanvasTheme.js";
 import { Rect } from "../../../../src/geometry/Rect.js";
 import { labelsIn } from "../RenderingTestUtil.js";
 
 const suite = new Suite("CircuitWarnings");
+
+suite.test(
+  "column survival appears only after Steps reaches the operation",
+  async () => {
+    const view = new DisplayView(document.createElement("canvas"));
+    const context = {
+      playheadStep: 1,
+      geometry: { opRect: () => new Rect(30, 30, 40, 100) },
+    };
+    const column = { indexOfNonUnitaryGate: () => 0 };
+    const stats = { survivalRate: (col) => (col === 0 ? 1 : 0.25) };
+    drawColumnSurvivalRate(context, view, column, 1, stats);
+    await view.commit();
+    assertThat(labelsIn(view).map((label) => label.text)).isEqualTo([]);
+    context.playheadStep = 2;
+    drawColumnSurvivalRate(context, view, column, 1, stats);
+    await view.commit();
+    assertThat(labelsIn(view).map((label) => label.text)).isEqualTo([
+      "omits",
+      "75%",
+    ]);
+  },
+);
 
 suite.test(
   "a disabled gate stays in sight under a veil, its reason inside its own bounds",

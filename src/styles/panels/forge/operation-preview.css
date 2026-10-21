@@ -6,9 +6,4 @@
     max-width: 100%;
     overflow: auto;
   }
-
-  .forge-operation-preview .rotation-figure {
-    width: 180px;
-    height: 180px;
-  }
 }

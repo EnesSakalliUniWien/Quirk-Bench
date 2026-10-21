@@ -132,6 +132,47 @@ try {
     },
   );
 
+  for (const [name, scheme, viewport] of [
+    ["desktop light", "light", desktop],
+    ["desktop dark", "dark", desktop],
+    [
+      "mobile",
+      "light",
+      { width: 390, height: 844, hasTouch: true, isMobile: true },
+    ],
+  ]) {
+    await withQuirkPage(
+      browser,
+      {
+        cols: [
+          ["X"],
+          ["ZDetectControlReset"],
+          ["Measure"],
+          ["|0⟩⟨0|"],
+          ["|1⟩⟨1|"],
+          ["ZDetector"],
+        ],
+      },
+      async (page) => {
+        await page.emulateMediaFeatures([
+          { name: "prefers-color-scheme", value: scheme },
+        ]);
+        await page.click("#inspect-button");
+        await page.waitForSelector('[data-inspect-panel="state"]', {
+          visible: true,
+        });
+        await page.click('[data-inspect-panel="state"]');
+        await waitForPanel(page, "state", true);
+        await page.waitForSelector(
+          '[data-measurement="1:0"][data-status="click"]',
+        );
+        await page.click('[data-measurement="1:0"] summary');
+        await scan(page, `${name} measurement results`);
+      },
+      viewport,
+    );
+  }
+
   // These are the same tests the end-to-end runner uses: no separate keyboard simulation.
   for (const { name, body } of tests.filter(
     ({ name }) =>

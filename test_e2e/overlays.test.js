@@ -1090,15 +1090,17 @@ test("panel controls remain distinct from their surfaces across panels", async (
           return {
             ownTheme: root.closest(".dockview-theme-shadow-quant") !== null,
             stockTheme: root.closest(".dockview-theme-dark") !== null,
-            controls: [...root.querySelectorAll("button:not([class])")].map(
-              (button) => {
-                const style = getComputedStyle(button);
-                return {
-                  text: contrast(style.color, style.backgroundColor),
-                  surface: contrast(style.backgroundColor, surface),
-                };
-              },
-            ),
+            controls: [
+              ...root.querySelectorAll(
+                '[data-slot="button"][data-variant="outline"]',
+              ),
+            ].map((button) => {
+              const style = getComputedStyle(button);
+              return {
+                text: contrast(style.color, style.backgroundColor),
+                surface: contrast(style.backgroundColor, surface),
+              };
+            }),
           };
         },
       );
@@ -1262,7 +1264,11 @@ test("an equality assertion is edited an amplitude at a time, or taken from the 
       await page.waitForFunction(
         () => document.querySelector(".amplitudes-editor input").value !== "1",
       );
-      assert.deepEqual(await fields(), ["0.707107", "0.707107"]);
+      // Readable text, not float noise: 12 significant digits, no exponent.
+      assert.deepEqual(await fields(), ["0.707106781187", "0.707106781187"]);
+      assert.ok(
+        (await fields()).every((value) => Math.abs(Number(value) - s) < 1e-11),
+      );
       await page.click("#gate-param-apply-button");
       await waitForPanel(page, "gate-param", false);
       assert.ok(near(await claimed(), [s, 0, s, 0]));
@@ -1279,6 +1285,55 @@ test("an equality assertion is edited an amplitude at a time, or taken from the 
       assert.ok(near(await claimed(), [s, 0, 0, -s]));
     },
   );
+});
+
+test("Prepare State preserves unchanged amplitudes and reopens complex edits", async (browser) => {
+  await withQuirkPage(browser, { cols: [["PrepPsi1"]] }, async (page) => {
+    const open = async () => {
+      await page.click("#gate-parameter-button");
+      await page.waitForSelector(".parameter-targets button");
+      await page.click(".parameter-targets button");
+      await page.waitForSelector(".amplitudes-editor input");
+    };
+    const fields = () =>
+      page.$$eval(".amplitudes-editor input", (inputs) =>
+        inputs.map((input) => input.value),
+      );
+    const initial = await currentCircuit(page);
+    await open();
+    assert.deepEqual(await fields(), ["1", "0"]);
+    assert.equal(await page.$("#amplitudes-use-state-button"), null);
+    await page.click("#gate-param-apply-button");
+    await waitForPanel(page, "gate-param", false);
+    await waitForCircuit(page, initial);
+
+    await open();
+    await replaceField(page, '[aria-label="Amplitude of |0⟩"]', "1+");
+    await page.click("#gate-param-apply-button");
+    await page.waitForSelector("#gate-param-error:not([hidden])");
+    await waitForCircuit(page, initial);
+    await replaceField(page, '[aria-label="Amplitude of |0⟩"]', "1");
+    await replaceField(page, '[aria-label="Amplitude of |1⟩"]', "-i");
+    await page.click("#gate-param-apply-button");
+    await waitForPanel(page, "gate-param", false);
+    const edited = await currentCircuit(page);
+    const expected = [Math.SQRT1_2, 0, 0, -Math.SQRT1_2];
+    assert.ok(
+      edited.cols[0][0].arg
+        .flat()
+        .every((value, i) => Math.abs(value - expected[i]) < 1e-9),
+    );
+    await open();
+    const reopened = await fields();
+    assert.ok(Math.abs(Number(reopened[0]) - Math.SQRT1_2) < 1e-11);
+    assert.ok(reopened[1].endsWith("i"));
+    assert.ok(
+      Math.abs(Number(reopened[1].slice(0, -1)) + Math.SQRT1_2) < 1e-11,
+    );
+    await page.click("#gate-param-apply-button");
+    await waitForPanel(page, "gate-param", false);
+    await waitForCircuit(page, edited);
+  });
 });
 
 test("parameter validation and typing undo preserve circuit history", async (browser) => {
@@ -1319,6 +1374,34 @@ test("parameter validation and typing undo preserve circuit history", async (bro
     await page.click("#gate-param-cancel-button");
     await page.click("#undo-button");
     await waitForCircuit(page, initial);
+  });
+  const formula = { cols: [[{ id: "Rxft", arg: "pi t^2" }]] };
+  await withQuirkPage(browser, formula, async (page) => {
+    await page.click("#gate-parameter-button");
+    await page.waitForSelector(".parameter-targets button");
+    await page.click(".parameter-targets button");
+    await page.waitForSelector("#gate-param-input");
+    for (const text of ["abc!", "1+*", "pi/("]) {
+      await replaceField(page, "#gate-param-input", text);
+      assert.equal(
+        await page.$eval("#gate-param-apply-button", (e) => e.disabled),
+        true,
+        text,
+      );
+      assert.ok(
+        await page.$eval(
+          "#gate-param-error",
+          (e) => !e.hidden && e.textContent.trim() !== "",
+        ),
+        text,
+      );
+    }
+    assert.deepEqual(await currentCircuit(page), formula);
+    await replaceField(page, "#gate-param-input", "-5pi/2 + pi t");
+    await page.keyboard.press("Enter");
+    await waitForCircuit(page, {
+      cols: [[{ id: "Rxft", arg: "-5pi/2 + pi t" }]],
+    });
   });
 });
 
@@ -1362,6 +1445,179 @@ test("matrix creation preserves entered values unless correction is accepted", a
       assert.deepEqual(await currentCircuit(page), created);
       await insertAndReopen(page, created);
     });
+});
+
+test("matrix paste preserves formulas and rejects malformed blocks without replacing the draft", async (browser) => {
+  await withQuirkPage(browser, { cols: [["H"]] }, async (page) => {
+    await page.click("#gate-forge-button");
+    await chooseConstruction(page, "Matrix");
+    const first = '.matrix-input-grid [aria-label="Row 1, column 1"]';
+    const values = () =>
+      page.$$eval(".matrix-input-grid input", (inputs) =>
+        inputs.map((input) => input.value),
+      );
+    const paste = (text) =>
+      page.$eval(
+        first,
+        (input, text) => {
+          input.focus();
+          const clipboardData = new DataTransfer();
+          clipboardData.setData("text/plain", text);
+          input.dispatchEvent(
+            new ClipboardEvent("paste", {
+              clipboardData,
+              bubbles: true,
+              cancelable: true,
+            }),
+          );
+        },
+        text,
+      );
+    await paste("0\t1\n1\t0");
+    await page.waitForFunction(
+      () =>
+        document.querySelector(
+          '.matrix-input-grid [aria-label="Row 1, column 1"]',
+        ).value === "0",
+    );
+    assert.deepEqual(await values(), ["0", "1", "1", "0"]);
+    await page.waitForSelector("#gate-forge-matrix-button:not([disabled])");
+    assert.match(
+      await page.$eval(".operation-status", (element) => element.textContent),
+      /Unitary/,
+    );
+    await paste("1\t2\n3");
+    await page.waitForSelector("#matrix-paste", { visible: true });
+    assert.equal(
+      await page.$eval("#matrix-paste", (element) => element.value),
+      "1\t2\n3",
+    );
+    assert.deepEqual(await values(), ["0", "1", "1", "0"]);
+    assert.equal(
+      await page.$eval("#matrix-use-paste", (element) => element.disabled),
+      true,
+    );
+    const formulas = ["1/sqrt(2)", "1/sqrt(2)", "1/sqrt(2)", "-1/sqrt(2)"];
+    await paste(
+      `${formulas[0]}\t${formulas[1]}\n${formulas[2]}\t${formulas[3]}`,
+    );
+    assert.deepEqual(await values(), formulas);
+    await namedButton(page, ".entry-modes button", "Raw text");
+    assert.match(
+      await page.$eval("#gate-forge-matrix", (element) => element.value),
+      /1\/sqrt\(2\)/,
+    );
+    await namedButton(page, ".entry-modes button", "Grid");
+    assert.deepEqual(await values(), formulas);
+    await page.focus(first);
+    await page.keyboard.down("Alt");
+    await page.keyboard.press("ArrowRight");
+    await page.keyboard.up("Alt");
+    assert.equal(
+      await page.evaluate(() =>
+        document.activeElement.getAttribute("aria-label"),
+      ),
+      "Row 1, column 2",
+    );
+    await page.keyboard.press("Enter");
+    assert.equal(
+      await page.evaluate(() =>
+        document.activeElement.getAttribute("aria-label"),
+      ),
+      "Row 2, column 1",
+    );
+    assert.deepEqual(await currentCircuit(page), { cols: [["H"]] });
+    await page.focus(first);
+    await page.$eval("#matrix-cell-editor", (input) => {
+      const clipboardData = new DataTransfer();
+      clipboardData.setData("text/plain", "0\t1\n1\t0");
+      input.dispatchEvent(
+        new ClipboardEvent("paste", {
+          clipboardData,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    assert.deepEqual(await values(), ["0", "1", "1", "0"]);
+    await replaceField(page, first, "sqrt(");
+    assert.equal(
+      await page.$eval(first, (element) =>
+        element.getAttribute("aria-invalid"),
+      ),
+      "true",
+    );
+    await page.waitForSelector("#gate-forge-matrix-button[disabled]");
+    await page.waitForFunction(() =>
+      document
+        .querySelector("#gate-forge-matrix-status")
+        ?.textContent.includes("Cannot create gate"),
+    );
+  });
+});
+
+test("vector paste previews normalized amplitudes and preserves entries on invalid paste", async (browser) => {
+  await withQuirkPage(browser, { cols: [["PrepPsi1"]] }, async (page) => {
+    await page.click("#gate-parameter-button");
+    await page.waitForSelector(".parameter-targets button");
+    await page.click(".parameter-targets button");
+    const first = '[aria-label="Amplitude of |0⟩"]';
+    const values = () =>
+      page.$$eval(".amplitudes-editor input", (inputs) =>
+        inputs.map((input) => input.value),
+      );
+    await page.$eval(first, (input) => {
+      const clipboardData = new DataTransfer();
+      clipboardData.setData("text/plain", "1\n-i");
+      input.dispatchEvent(
+        new ClipboardEvent("paste", {
+          clipboardData,
+          bubbles: true,
+          cancelable: true,
+        }),
+      );
+    });
+    await page.waitForSelector("#amplitudes-paste", { visible: true });
+    assert.deepEqual(await values(), ["1", "0"]);
+    await replaceField(page, "#amplitudes-paste", "1\n2\n3");
+    assert.equal(
+      await page.$eval("#amplitudes-use-vector", (element) => element.disabled),
+      true,
+    );
+    assert.deepEqual(await values(), ["1", "0"]);
+    await replaceField(page, "#amplitudes-paste", "1\n-i");
+    await page.click("#amplitudes-use-vector");
+    assert.deepEqual(await values(), ["1", "-i"]);
+    assert.match(
+      await page.$eval("#amplitudes-preview", (element) => element.textContent),
+      /0\.7071068/,
+    );
+    await replaceField(page, first, "1+");
+    assert.equal(
+      await page.$eval(
+        "#gate-param-apply-button",
+        (element) => element.disabled,
+      ),
+      true,
+    );
+    assert.equal(
+      await page.$eval(first, (element) =>
+        element.getAttribute("aria-invalid"),
+      ),
+      "true",
+    );
+    await page.waitForSelector("#gate-param-error:not([hidden])");
+    assert.deepEqual(await currentCircuit(page), { cols: [["PrepPsi1"]] });
+    await replaceField(page, first, "1");
+    await page.click("#gate-param-apply-button");
+    await waitForPanel(page, "gate-param", false);
+    const expected = [Math.SQRT1_2, 0, 0, -Math.SQRT1_2];
+    assert.ok(
+      (await currentCircuit(page)).cols[0][0].arg
+        .flat()
+        .every((value, i) => Math.abs(value - expected[i]) < 1e-9),
+    );
+  });
 });
 
 test("matrix grids keep dimension drafts and invalidate accepted corrections on edits", async (browser) => {

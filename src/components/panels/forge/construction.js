@@ -1,6 +1,10 @@
+import {
+  parseEntryRows,
+  inspectComplexEntry,
+} from "../../math/structured-entry.js";
 import { Axis } from "../../../engine/math/formula/Axis.js";
 import { parseAngleExpression } from "../../../engine/math/formula/AngleExpression.js";
-import { Matrix } from "../../../engine/math/matrix/Matrix.js";
+import { analyzeOperator } from "../../../engine/math/matrix/operatorAnalysis.js";
 import { GateBuilder } from "../../../circuit/model/Gate.js";
 import { GateColumn } from "../../../circuit/model/GateColumn.js";
 import {
@@ -63,21 +67,88 @@ export function inspectMatrix(matrix) {
     throw new Error("Every matrix entry must be finite.");
   return {
     qubits: Math.log2(n),
-    unitary: matrix.isUnitary(0.009),
-    residual: Math.sqrt(
-      matrix.adjoint().times(matrix).minus(Matrix.identity(n)).norm2(),
-    ),
+    ...analyzeOperator(matrix),
   };
 }
 
+export const matrixTextFromCells = (cells, size) =>
+  `{${Array.from({ length: size }, (_, row) => `{${cells.slice(row * size, (row + 1) * size).join(",")}}`).join(",")}}`;
+
+function validateEntries(rows) {
+  for (const [row, entries] of rows.entries()) {
+    for (const [col, text] of entries.entries()) {
+      const result = inspectComplexEntry(text);
+      if (result.error)
+        throw new Error(`Row ${row + 1}, column ${col + 1}: ${result.error}`);
+    }
+  }
+}
+
+// Tabs, semicolons and brackets mark an explicit table; commas and newlines alone are a legacy list.
+const isTable = (text) => /[\t;[\]{}]/.test(text);
+
+/** Legacy list entries as parseUserGateMatrix_noCorrection reads them: newlines act as commas. */
+const listEntries = (text) =>
+  text
+    .split(/,?\s*\n\s*(?!$)/)
+    .join(",")
+    .trim()
+    .replace(/,$/, "")
+    .split(",")
+    .map((entry) => entry.trim() || "0");
+
 export function parseMatrixDraft(text, corrected = false) {
   if (!text.trim()) throw new Error("Enter a matrix.");
-  // The formula parser accepts unfinished trailing operators; an editor must not create those.
-  if (/[+*/^-]\s*(?:[,}\]]|$)/.test(text))
-    throw new Error("Complete every matrix expression.");
-  const matrix = parseUserMatrix(text, corrected);
+  let source = text;
+  // Explicit tables must retain their row/column structure. Legacy lists keep zero padding.
+  if (isTable(text)) {
+    const rows = parseEntryRows(text);
+    if (rows.length !== rows[0].length || ![2, 4, 8, 16].includes(rows.length))
+      throw new Error("Use 2×2, 4×4, 8×8, or 16×16 rows and columns.");
+    validateEntries(rows);
+    source = matrixTextFromCells(rows.flat(), rows.length);
+  } else {
+    validateEntries([listEntries(text)]);
+  }
+  const matrix = parseUserMatrix(source, corrected);
   inspectMatrix(matrix);
   return matrix;
+}
+
+/** Keep the user's formulas when switching to a grid, including legacy zero padding. */
+export function matrixEntriesForGrid(text) {
+  const matrix = parseMatrixDraft(text);
+  const size = matrix.width();
+  if (isTable(text)) return { size, cells: parseEntryRows(text).flat() };
+  const cells = listEntries(text);
+  if (cells.length === 1)
+    return { size, cells: [cells[0], "0", "0", cells[0]] };
+  return {
+    size,
+    cells: [...cells, ...Array(size * size - cells.length).fill("0")],
+  };
+}
+
+/** Return a new grid only after the entire block and its destination have been validated. */
+export function applyMatrixPaste(cells, size, activeCell, rows) {
+  const rowStart = Math.floor(activeCell / size);
+  const colStart = activeCell % size;
+  if (
+    !rows.length ||
+    !rows[0].length ||
+    rows.some((row) => row.length !== rows[0].length)
+  )
+    throw new Error("Use the same number of entries in every row.");
+  if (rowStart + rows.length > size || colStart + rows[0].length > size)
+    throw new Error(
+      `This ${rows.length}×${rows[0].length} block does not fit at row ${rowStart + 1}, column ${colStart + 1}. Choose another starting entry or a larger matrix dimension.`,
+    );
+  validateEntries(rows);
+  const next = [...cells];
+  for (const [row, entries] of rows.entries())
+    for (const [col, text] of entries.entries())
+      next[(rowStart + row) * size + colStart + col] = text;
+  return next;
 }
 
 export function buildMatrixGate(matrix, name, kind = "Matrix") {

@@ -5,6 +5,7 @@ import { ReadoutSection } from "./readout-section.jsx";
 
 /**
  * @typedef {object} ReadoutSidebarProps
+ * @property {string=} idPrefix Unique prefix when embedded; the standalone panel retains its IDs.
  * @property {import("./analyzerModel.js").PanelReadout | null | undefined} readout What to print;
  *     null or undefined while there is no state, when every value reads n/a.
  * @property {string=} className Where the readout stands in the analyzer's grid.
@@ -20,7 +21,7 @@ const UNAVAILABLE = "n/a";
  *
  * @param {ReadoutSidebarProps} props
  */
-function ReadoutSidebar({ readout, className }) {
+function ReadoutSidebar({ idPrefix = "bloch", readout, className }) {
   const shown = readout ?? undefined;
   /** @param {keyof import("./analyzerModel.js").PanelReadout} field */
   const value = (field) =>
@@ -45,24 +46,24 @@ function ReadoutSidebar({ readout, className }) {
           <dl className="bloch-readout">
             <ReadoutRow
               symbol="|r|"
-              id="bloch-purity"
+              id={`${idPrefix}-purity`}
               value={value("length")}
             />
             <ReadoutRow
               symbol="θ"
-              id="bloch-theta"
+              id={`${idPrefix}-theta`}
               value={value("theta")}
               title={shown?.thetaExact}
             />
             <ReadoutRow
               symbol="ϕ"
-              id="bloch-phi"
+              id={`${idPrefix}-phi`}
               value={value("phi")}
               title={shown?.phiExact}
             />
           </dl>
           {shown?.note !== undefined && (
-            <p id="bloch-note" className="bloch-note">
+            <p id={`${idPrefix}-note`} className="bloch-note">
               {shown.note}
             </p>
           )}
@@ -76,7 +77,7 @@ function ReadoutSidebar({ readout, className }) {
                 symbol={axis}
                 symbolClass={`bloch-axis-${axis}`}
                 formula={formula}
-                id={`bloch-${axis}`}
+                id={`${idPrefix}-${axis}`}
                 value={component}
               />
             ))}
@@ -87,13 +88,13 @@ function ReadoutSidebar({ readout, className }) {
           <dl className="bloch-readout bloch-readout-wide">
             <ReadoutRow
               symbol="q"
-              id="bloch-quaternion"
+              id={`${idPrefix}-quaternion`}
               value={value("quaternion")}
               withFormula={false}
             />
             <ReadoutRow
               symbol="r"
-              id="bloch-vector-quaternion"
+              id={`${idPrefix}-vector-quaternion`}
               value={value("vector")}
               withFormula={false}
             />
@@ -113,7 +114,7 @@ function ReadoutSidebar({ readout, className }) {
                 key={name}
                 symbol={name}
                 formula={formula}
-                id={name === "α" ? "bloch-alpha" : "bloch-beta"}
+                id={`${idPrefix}-${name === "α" ? "alpha" : "beta"}`}
                 value={amplitude}
               />
             ))}
@@ -125,14 +126,14 @@ function ReadoutSidebar({ readout, className }) {
             <ReadoutRow
               symbol="Tr ρ²"
               formula="(1 + |r|²)/2"
-              id="bloch-tr-rho2"
+              id={`${idPrefix}-tr-rho2`}
               value={value("purity")}
             />
           </dl>
         </ReadoutSection>
 
         <ReadoutSection title="State">
-          <p id="bloch-state" className="bloch-state">
+          <p id={`${idPrefix}-state`} className="bloch-state">
             {value("state")}
           </p>
         </ReadoutSection>

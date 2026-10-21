@@ -252,6 +252,12 @@ ParametrizedRotationGates.ZToMinusA = new GateBuilder()
   .promiseEffectIsStable()
   .promiseEffectOnlyPhases().gate;
 
+/** @param {!string} formula @returns {!boolean} Whether the formula fails to evaluate at some probe time. */
+const isBadFormula = (formula) =>
+  TIME_PROBE_VALUES.some(
+    (t) => parseTimeFormula(formula, t, false) === undefined,
+  );
+
 /**
  * @param {!GateCheckArgs} args
  * @returns {undefined|!string}
@@ -260,12 +266,7 @@ function badFormulaDetector(args) {
   if (typeof args.gate.param === "number") {
     return args.gate.param;
   } else if (typeof args.gate.param === "string") {
-    for (const t of TIME_PROBE_VALUES) {
-      if (parseTimeFormula(args.gate.param, t, false) === undefined) {
-        return "bad\nformula";
-      }
-    }
-    return undefined;
+    return isBadFormula(args.gate.param) ? "bad\nformula" : undefined;
   } else {
     return "bad\nvalue";
   }
@@ -275,7 +276,7 @@ const updateUsingFormula = makeUpdateFormulaFunc(1);
 
 /**
  * @param {!string} quantityName
- * @returns {!{title: !string, message: !string, applyText: !function(!Gate, !string): !{gate: !Gate}}}
+ * @returns {!{title: !string, message: !string, applyText: !function(!Gate, !string): !{gate: !Gate}|!{error: !string}}}
  */
 function angleFormulaDialog(quantityName) {
   return {
@@ -289,9 +290,13 @@ function angleFormulaDialog(quantityName) {
       "Available constants: e, pi\n" +
       "Available functions: cos, sin, acos, asin, tan, atan, ln, sqrt, exp\n" +
       "Available operators: + * / - ^",
-    applyText: (oldGate, text) => ({
-      gate: text.trim() === "" ? oldGate : oldGate.withParam(text),
-    }),
+    applyText: (oldGate, text) => {
+      if (text.trim() === "") return { gate: oldGate };
+      // Refuse what badFormulaDetector would flag, so a broken formula never reaches the circuit.
+      if (isBadFormula(text))
+        return { error: "Enter a formula, such as sin(pi t) or pi/2." };
+      return { gate: oldGate.withParam(text) };
+    },
   };
 }
 

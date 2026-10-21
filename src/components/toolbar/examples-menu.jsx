@@ -34,7 +34,9 @@ function ExamplesMenu({ worded = false }) {
     <Menu.Root>
       {worded ? (
         // The same menu, worded, for the empty circuit, where a first-timer is looking.
-        <Menu.Trigger render={<Button id="examples-worded-button" />}>
+        <Menu.Trigger
+          render={<Button id="examples-worded-button" variant="outline" />}
+        >
           <BookOpenIcon data-icon="inline-start" aria-hidden="true" />
           Open an example
         </Menu.Trigger>

@@ -1105,7 +1105,9 @@ class GateBuilder {
   }
 
   /**
-   * Sets meta-properties indicating a qubit density matrix needs to be computed wherever this gate is placed.
+   * Requests a single-qubit density matrix for every wire this gate covers, at its column, on every
+   * run. The single-wire Bloch, Chance and Density displays and the amplitude displays use it;
+   * a multi-wire density display holds its own matrix and does not.
    * @returns {!GateBuilder}
    */
   markAsRendererNeedsSingleQubitDensityStats() {

@@ -70,7 +70,6 @@
        sits flush against Clear circuit or its neighbour. */
   .app-toolbar-danger {
     margin-left: auto;
-    color: var(--destructive);
   }
 
   @media (any-pointer: coarse) {

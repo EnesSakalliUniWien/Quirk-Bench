@@ -5,6 +5,7 @@ import {
   onReducedMotionChange,
   prefersReducedMotion,
 } from "../../../browser/reducedMotion.js";
+import { Button } from "../../ui/button.jsx";
 
 /**
  * A slider for one setting, with its value beside it. `scale` converts the stored value to the
@@ -124,9 +125,9 @@ function MotionSettings({ settings }) {
         unit="snapshots/s"
       />
       <ShotsSetting settings={settings} />
-      <button type="button" onClick={() => reset()}>
+      <Button variant="outline" onClick={() => reset()}>
         Reset to defaults
-      </button>
+      </Button>
     </details>
   );
 }

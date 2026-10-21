@@ -30,7 +30,6 @@ import { Rect } from "../../../geometry/Rect.js";
 import { Point } from "../../../geometry/Point.js";
 import { AXIS_COLOR, PLOT_RADIUS } from "./BlochGeometry.js";
 import {
-  PURE_STATE_THRESHOLD,
   blochReading,
   componentFormulas,
   degreesText,
@@ -162,7 +161,7 @@ function shadowOf(vec, reading = blochReading(vec)) {
   return {
     foot: [vec.x, vec.y, 0],
     surface: [vec.x / r, vec.y / r, vec.z / r],
-    inside: r < PURE_STATE_THRESHOLD,
+    inside: !reading.isPure,
   };
 }
 

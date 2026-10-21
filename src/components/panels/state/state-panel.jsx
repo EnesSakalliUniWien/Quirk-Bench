@@ -1,12 +1,15 @@
+import { BlochAnalysis } from "../../math/bloch-analysis.jsx";
+import { qubitReadings } from "../../../engine/simulation/qubitMarginals.js";
 import { signedFixed } from "../../../base/Format.js";
 import { useColourScheme } from "../../useColourScheme.js";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 import { ketBitsHeader } from "../../../circuit/registerLabels.js";
 import { phaseColor } from "../../../config/CanvasTheme.js";
 import { stateTableRows } from "../../../engine/simulation/stateTableRows.js";
 import { usePlayheadStats } from "../shared/usePlayheadStats.js";
 import { useVisibleRows } from "./useVisibleRows.js";
+import { MeasurementResults } from "./measurement-results.jsx";
 
 /** What the table holds before the circuit has started. */
 const NO_STATE = {
@@ -69,6 +72,16 @@ function SpacerRow({ height, columnCount }) {
 function StatePanel() {
   useColourScheme();
   const sample = usePlayheadStats();
+  const getBlochStates = useCallback(
+    () => [
+      {
+        label: "At the playhead",
+        registers: sample.stats.circuitDefinition.registers,
+        qubits: qubitReadings(sample.stats, sample.wireCount),
+      },
+    ],
+    [sample],
+  );
   const wireCount = sample?.wireCount ?? 0;
   const stats = sample?.stats;
   // The rows follow the stats alone: a render for any other reason, such as a scroll, reuses them.
@@ -134,23 +147,25 @@ function StatePanel() {
             </p>
           )}
         {sample && (
-          <div className="state-measurements">
+          <div className="state-samples">
             {Object.entries(sample.stats.sampleOutcomes).map(([key, value]) => (
               <p key={key}>
                 Sample {key}: {value.i} (probability {value.p.toPrecision(6)};
                 no collapse)
               </p>
             ))}
-            {[...sample.stats.customStatsEntries()]
-              .filter(([, value]) => typeof value === "boolean")
-              .map(([key, value]) => (
-                <p key={key}>
-                  Detector {key}: {value ? "click" : "no click"}
-                </p>
-              ))}
           </div>
         )}
-        <div ref={scrollRef} className="state-table-scroll">
+        <MeasurementResults sample={sample} />
+        {sample && <BlochAnalysis getStates={getBlochStates} />}
+        {/* eslint-disable jsx-a11y-x/no-noninteractive-tabindex -- Native arrow-key scrolling needs a focusable region, including when no output state survives. */}
+        <div
+          ref={scrollRef}
+          className="state-table-scroll"
+          tabIndex={0}
+          role="region"
+          aria-label="State table"
+        >
           <table
             id="state-table"
             className={
@@ -274,6 +289,7 @@ function StatePanel() {
             </tbody>
           </table>
         </div>
+        {/* eslint-enable jsx-a11y-x/no-noninteractive-tabindex */}
 
         {/* Never let a cap read as "that's all of them". */}
         <p id="state-truncation-note" className="state-note">

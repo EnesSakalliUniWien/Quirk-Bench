@@ -111,7 +111,9 @@ function bannerElements() {
 
   const copyButton = document.createElement("button");
   copyButton.type = "button";
-  copyButton.className = "error-banner-button";
+  copyButton.className = "ui-button error-banner-button";
+  copyButton.dataset.variant = "outline";
+  copyButton.dataset.size = "sm";
   copyButton.textContent = "Copy details";
   copyButton.addEventListener("click", () => {
     navigator.clipboard.writeText(_state.detailsText || "").then(
@@ -124,15 +126,20 @@ function bannerElements() {
   });
 
   const reportAnchor = document.createElement("a");
-  reportAnchor.className = "error-banner-button";
+  reportAnchor.className = "ui-button error-banner-button";
+  reportAnchor.dataset.variant = "outline";
+  reportAnchor.dataset.size = "sm";
   reportAnchor.textContent = "Report an issue";
   reportAnchor.target = "_blank";
   reportAnchor.rel = "noreferrer noopener";
 
   const dismissButton = document.createElement("button");
   dismissButton.type = "button";
-  dismissButton.className = "error-banner-button error-banner-dismiss";
-  // The x comes from src/resources/icons, the app's one home for the icons it draws itself.
+  dismissButton.className =
+    "ui-button error-banner-button error-banner-dismiss";
+  dismissButton.dataset.variant = "ghost";
+  dismissButton.dataset.size = "sm";
+  // The x is lucide-react's, rendered to markup in src/resources/icons so it needs no live React tree.
   dismissButton.appendChild(iconElement("x"));
   dismissButton.setAttribute("aria-label", "Dismiss the error message");
   dismissButton.addEventListener("click", dismissErrorBanner);

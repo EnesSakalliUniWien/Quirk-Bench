@@ -1,3 +1,4 @@
+import { BlochAnalysis } from "../../math/bloch-analysis.jsx";
 import { useCallback, useMemo, useState } from "react";
 import { useStore } from "zustand";
 import { appStore } from "../../../state/appStore.js";
@@ -22,6 +23,16 @@ function RegistersPanel() {
         ? undefined
         : registerReadings(sample.stats, sample.wireCount),
     [sample],
+  );
+  const getBlochStates = useCallback(
+    () => [
+      {
+        label: "At the playhead",
+        registers: sample.stats.circuitDefinition.registers,
+        qubits: readings.flatMap(({ qubits }) => qubits),
+      },
+    ],
+    [sample, readings],
   );
   const clearTarget = useCallback(
     () => appStore.setState({ registerTarget: undefined }),
@@ -74,6 +85,8 @@ function RegistersPanel() {
           prepare box on its wires.
         </p>
       )}
+
+      {readings.length > 0 && <BlochAnalysis getStates={getBlochStates} />}
 
       <p id="registers-error" className="registers-error" role="alert">
         {error}

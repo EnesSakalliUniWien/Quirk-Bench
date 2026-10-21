@@ -71,7 +71,11 @@ function parseUserRotation(angleText, phaseText, axisText) {
   const phase = parseUserAngle(phaseText);
   let { x, y, z } = Axis.parse(axisText);
 
-  const len = Math.sqrt(x * x + y * y + z * z);
+  const scale = Math.max(Math.abs(x), Math.abs(y), Math.abs(z));
+  x /= scale;
+  y /= scale;
+  z /= scale;
+  const len = Math.hypot(x, y, z);
   x /= len;
   y /= len;
   z /= len;

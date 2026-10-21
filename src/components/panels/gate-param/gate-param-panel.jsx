@@ -3,8 +3,12 @@ import { useStore } from "zustand";
 import { GateColumn } from "../../../circuit/model/GateColumn.js";
 import { appStore } from "../../../state/appStore.js";
 import { closePanel, openPanel } from "../../dock.jsx";
+import { OperationBlochAnalysis } from "../../math/bloch-analysis.jsx";
+import { analyzeOperator } from "../../../engine/math/matrix/operatorAnalysis.js";
 import { AngleField } from "../../math/angle-field.jsx";
+import { Button } from "../../ui/button.jsx";
 import { AmplitudesEditor } from "./amplitudes-editor.jsx";
+import { validateAmplitudes } from "./amplitudeValidation.js";
 import {
   AngleUnit,
   parseAngleExpression,
@@ -174,37 +178,42 @@ function ParameterList({ deps, close, findGate }) {
       <div className="construction-scroll parameter-targets">
         {entries.length ? (
           entries.map((target, index) => (
-            <button
+            <Button
               type="button"
+              variant="outline"
               key={`${target.col}:${target.row}`}
               ref={index === 0 ? firstAction : undefined}
               onClick={() => appStore.setState({ gateParamTarget: target })}
             >
-              {target.gate.symbol}({String(target.gate.param ?? "")}) · wire{" "}
-              {target.row + 1}, column {target.col + 1}
-            </button>
+              {target.gate.symbol}(
+              {target.gate.paramDialog.editor === "amplitudes"
+                ? `${target.gate.param.length} amplitudes`
+                : String(target.gate.param ?? "")}
+              ) · wire {target.row + 1}, column {target.col + 1}
+            </Button>
           ))
         ) : (
           <>
             <p className="field-description" id="gate-param-search-hint">
               In the gate palette, search for “rotation”.
             </p>
-            <button
+            <Button
               id="gate-param-find-button"
               type="button"
+              variant="outline"
               ref={firstAction}
               aria-describedby="gate-param-search-hint"
               onClick={findGate}
             >
               Find a rotation gate
-            </button>
+            </Button>
           </>
         )}
       </div>
       <footer className="construction-actions">
-        <button type="button" onClick={close}>
+        <Button type="button" variant="outline" onClick={close}>
           Close
-        </button>
+        </Button>
       </footer>
     </div>
   );
@@ -225,6 +234,26 @@ function ParameterEditor({ deps, target, close: closeWindow }) {
     } catch (e) {
       validation = e.message;
     }
+  } else if (edited) {
+    // Existing dialogs parse into a copied gate; live checks do not commit or mutate the target.
+    validation = isAmplitudes
+      ? validateAmplitudes(text.split(","), target.gate.height).error
+      : target.gate.paramDialog.applyText(target.gate, text).error;
+  }
+  // Use the same parsed draft as Apply, on a copied gate; preview never commits a revision.
+  let previewMatrix;
+  if (isAngle && !validation) {
+    const value = !edited
+      ? String(target.gate.param ?? "")
+      : unit === AngleUnit.DEGREES
+        ? String(parsed.radians)
+        : text;
+    const draft = target.gate.paramDialog.applyText(target.gate, value);
+    if (!draft.error) {
+      const matrix = draft.gate.knownMatrixAt(0);
+      if (matrix?.width() === 2 && analyzeOperator(matrix).rotation)
+        previewMatrix = matrix;
+    }
   }
   useEffect(
     () =>
@@ -236,6 +265,28 @@ function ParameterEditor({ deps, target, close: closeWindow }) {
       }),
     [],
   );
+  useEffect(() => {
+    if (!isAmplitudes) return;
+    const frame = requestAnimationFrame(() => {
+      const dock = appStore.getState().dock;
+      const group = dock?.getPanel("gate-param")?.group;
+      const box = group?.api.boundingBox;
+      // Match the dock's narrow arrangement; it owns mobile and docked panel sizes.
+      if (
+        !dock ||
+        dock.width <= 920 ||
+        group?.api.location.type !== "floating" ||
+        !box
+      )
+        return;
+      const available = dock.height - box.top - 16;
+      if (available > group.api.height)
+        group.api.setSize({
+          height: Math.max(group.api.height, Math.min(620, available)),
+        });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [isAmplitudes]);
   const close = () => {
     closing.current = true;
     closeWindow();
@@ -360,6 +411,8 @@ function ParameterEditor({ deps, target, close: closeWindow }) {
               ref={inputRef}
               className="gate-param-input"
               aria-label="Parameter value"
+              aria-invalid={!!validation}
+              aria-describedby="gate-param-error"
               value={text}
               onChange={(e) => {
                 setText(e.target.value);
@@ -373,10 +426,11 @@ function ParameterEditor({ deps, target, close: closeWindow }) {
           id="gate-param-error"
           className="field-error"
           role="alert"
-          hidden={!error}
+          hidden={!error && (!validation || isAngle)}
         >
-          {error}
+          {error || (!isAngle ? validation : "")}
         </p>
+        {previewMatrix && <OperationBlochAnalysis matrix={previewMatrix} />}
         {isAngle && (
           <details className="formula-help">
             <summary>Formula help</summary>
@@ -387,16 +441,22 @@ function ParameterEditor({ deps, target, close: closeWindow }) {
         )}
       </div>
       <footer className="construction-actions">
-        <button id="gate-param-cancel-button" type="button" onClick={close}>
+        <Button
+          id="gate-param-cancel-button"
+          type="button"
+          variant="outline"
+          onClick={close}
+        >
           Cancel
-        </button>
-        <button
+        </Button>
+        <Button
           id="gate-param-apply-button"
           type="submit"
+          variant="primary"
           disabled={!!validation}
         >
           Apply
-        </button>
+        </Button>
       </footer>
     </form>
   );

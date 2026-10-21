@@ -136,9 +136,23 @@ export function ForgePanelBody({ deps }) {
           className="construction-tabs"
           aria-label="Construction method"
         >
-          <Tabs.Tab value="rotation">Rotation</Tabs.Tab>
-          <Tabs.Tab value="matrix">Matrix</Tabs.Tab>
-          <Tabs.Tab value="circuit">Circuit</Tabs.Tab>
+          <Tabs.Tab
+            value="rotation"
+            className="ui-button"
+            data-variant="outline"
+          >
+            Rotation
+          </Tabs.Tab>
+          <Tabs.Tab value="matrix" className="ui-button" data-variant="outline">
+            Matrix
+          </Tabs.Tab>
+          <Tabs.Tab
+            value="circuit"
+            className="ui-button"
+            data-variant="outline"
+          >
+            Circuit
+          </Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="rotation" className="construction-tab-panel">
           <RotationMethod

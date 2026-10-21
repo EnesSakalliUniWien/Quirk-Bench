@@ -62,6 +62,7 @@ class Recorder {
     this._pendingSample = undefined;
     /** Counts the recordings started, so a write still in flight from one never counts in the next. */
     this._session = 0;
+    this._admissions = Promise.resolve();
     // Encoding a take costs tens of milliseconds at sixteen qubits, and a ghost is a safety copy
     // that nobody waits for: the commit only captures what the take records, by reference
     // because results are immutable, and the store builds and writes it when the page is idle.
@@ -327,19 +328,23 @@ class Recorder {
    * @private
    */
   async _admit(takes) {
-    // After the store is read, and after every ghost that is waiting has been written.
-    await this.store.flush();
-    const existing = new Map(
-      this.store.items.getState().value.map((r) => [r.id, r.take]),
-    );
-    const imported = takes.map((t) =>
-      existing.has(t.id) &&
-      JSON.stringify(existing.get(t.id)) !== JSON.stringify(t)
-        ? { ...t, id: freshSeed() }
-        : t,
-    );
-    await this.save(imported);
-    return imported;
+    // Identity checks must wait for earlier imports to finish saving.
+    const run = this._admissions.then(async () => {
+      await this.store.flush();
+      const existing = new Map(
+        this.store.items.getState().value.map((r) => [r.id, r.take]),
+      );
+      const imported = takes.map((t) =>
+        existing.has(t.id) &&
+        JSON.stringify(existing.get(t.id)) !== JSON.stringify(t)
+          ? { ...t, id: freshSeed() }
+          : t,
+      );
+      await this.save(imported);
+      return imported;
+    });
+    this._admissions = run.catch(() => {});
+    return run;
   }
 }
 

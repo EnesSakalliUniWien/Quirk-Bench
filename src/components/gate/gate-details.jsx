@@ -10,7 +10,7 @@ import {
 } from "../../circuit/gateDescription.js";
 import { decompositionOf } from "../../circuit/gateDecomposition.js";
 import { Matrix } from "../../engine/math/matrix/Matrix.js";
-import { QubitMatrix } from "../../engine/math/matrix/QubitMatrix.js";
+import { analyzeOperator } from "../../engine/math/matrix/operatorAnalysis.js";
 import { preparedStateVector } from "../../engine/math/preparedStates.js";
 import { columnStructure } from "../../engine/simulation/columnStructure/columnStructure.js";
 import { structureMatrix } from "../../engine/simulation/columnStructure/evaluation.js";
@@ -21,7 +21,13 @@ import { stateGrid } from "../../draw/renderers/dataRenderers.js";
 import { OperatorMatrix } from "../math/operator-matrix.jsx";
 import { stateModel } from "../math/matrixModel.js";
 import { CircuitFigure } from "./circuit-figure.jsx";
-import { RotationFigure } from "./rotation-figure.jsx";
+import {
+  BlochAnalysis,
+  OperationBlochAnalysis,
+} from "../math/bloch-analysis.jsx";
+import { qubitMarginals } from "../../engine/simulation/qubitMarginals.js";
+import { measurementDescription } from "../../circuit/measurementDescription.js";
+import { MeasurementExplanation } from "./measurement-symbol.jsx";
 
 /** Past two qubits one sentence per basis state is a wall of text, not an explanation. */
 const MAX_DESCRIBED_ROWS = 4;
@@ -163,22 +169,34 @@ function GateDetails({
 
   const format =
     gate.stableDuration() < 0.2 ? Format.CONSISTENT : Format.SIMPLIFIED;
+  const measurement = measurementDescription(gate);
   // The circuit the gate stands for: its own, when it was built from one, or the one the app knows
   // it is equivalent to. The simulator reaches most of these another way, so this is display only.
   const decomposition = decompositionOf(gate);
   const rotation =
-    matrix !== undefined && matrix.width() === 2 && matrix.isUnitary(0.001)
-      ? QubitMatrix.operationToAngleAxisRotation(matrix)
-      : undefined;
+    matrix === undefined ? undefined : analyzeOperator(matrix).rotation;
 
   return (
     <div className="gate-details">
       <header className="gate-details-header">
         {title}
         {gate.blurb !== "" && (
-          <p className="gate-details-blurb">{gate.blurb}</p>
+          <p className="gate-details-blurb">
+            {measurement?.summary ?? gate.blurb}
+          </p>
         )}
       </header>
+
+      {measurement && (
+        <section className="gate-details-section">
+          <h3>Measurement behavior</h3>
+          <MeasurementExplanation description={measurement} />
+          <p className="gate-details-note">
+            Open Inspect → State for results by wire and column, and
+            Before/After state inspection.
+          </p>
+        </section>
+      )}
 
       {gate.knownPreparation !== undefined && (
         <section className="gate-details-section">
@@ -203,6 +221,14 @@ function GateDetails({
               </p>
             </>
           )}
+          <BlochAnalysis
+            getStates={() => [
+              {
+                label: "Prepared state",
+                qubits: qubitMarginals(preparedState(gate), gate.height),
+              },
+            ]}
+          />
           <p className="gate-details-legend">
             Its wires start in this state. Nothing may have acted on them before
             the box.
@@ -243,7 +269,7 @@ function GateDetails({
         <section className="gate-details-section">
           <h3>Rotation</h3>
           <div className="gate-details-rotation">
-            <RotationFigure axis={rotation.axis} angle={rotation.angle} />
+            <OperationBlochAnalysis matrix={matrix} />
             <dl className="gate-details-facts">
               <dt>turns</dt>
               <dd>
@@ -283,7 +309,8 @@ function GateDetails({
         </section>
       )}
 
-      {matrix === undefined &&
+      {measurement === undefined &&
+        matrix === undefined &&
         alone?.structure === undefined &&
         decomposition === undefined && (
           <p className="gate-details-note">

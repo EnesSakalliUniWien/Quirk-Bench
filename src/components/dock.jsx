@@ -157,7 +157,6 @@ function DockGroupActions({ activePanel }) {
     return null;
   return (
     <Button
-      className="dock-group-close"
       size="icon"
       data-close-panel-id={activePanel.id}
       aria-label={`Close ${activePanel.title}`}

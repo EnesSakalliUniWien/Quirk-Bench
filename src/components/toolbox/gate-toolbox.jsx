@@ -26,6 +26,8 @@ import {
   MysteryGateMaker,
 } from "../../gates/misc/RandomUnitaryGate.js";
 import { chipPartsOf, listNameOf, searchTextOf } from "./toolbox.js";
+import { measurementDescription } from "../../circuit/measurementDescription.js";
+import { MeasurementSymbol } from "../gate/measurement-symbol.jsx";
 
 /** A tile's height and the gap between them, from src/styles/gates/toolbox/tiles.css, groups.css and
  *  the icon button in src/styles/ui/buttons.css: the taller of its 2rem details button and its padded
@@ -63,6 +65,7 @@ function GateChip({ gate }) {
   useColourScheme();
   const style = gateStyle(gate);
   const { base, sup } = chipPartsOf(gate);
+  const measurement = measurementDescription(gate);
   const length = base.length + sup.length;
   const fit = length <= 3 ? "large" : length <= 6 ? "medium" : "small";
   return (
@@ -71,10 +74,14 @@ function GateChip({ gate }) {
       data-fit={fit}
       style={{ backgroundColor: style.fill, color: style.text }}
     >
-      <span className="gate-chip-symbol">
-        {base}
-        {sup !== "" && <sup>{sup}</sup>}
-      </span>
+      {measurement ? (
+        <MeasurementSymbol description={measurement} symbol={gate.symbol} />
+      ) : (
+        <span className="gate-chip-symbol">
+          {base}
+          {sup !== "" && <sup>{sup}</sup>}
+        </span>
+      )}
     </span>
   );
 }

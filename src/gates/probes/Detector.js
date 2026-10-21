@@ -39,6 +39,10 @@ import { WglArg } from "../../engine/webgl/shader/WglArg.js";
 import { CanvasTheme } from "../../config/CanvasTheme.js";
 import { Typography } from "../../config/Typography.js";
 import { paintOutline } from "../../draw/gate/GateFrame.js";
+import {
+  drawMeasurementCaption,
+  displayedDetectorResult,
+} from "../../draw/gate/MeasurementCaption.js";
 
 import { Matrix } from "../../engine/math/matrix/Matrix.js";
 import { GateShaders } from "../../engine/simulation/gpu/GateShaders.js";
@@ -240,7 +244,7 @@ function drawWedge(args, axis) {
   // so a click is seen at a glance and nothing is written across it.
   const τ = Math.PI * 2;
   const r = Math.min(args.rect.h / 2, args.rect.w) - 1;
-  const clicked = args.customStats === true;
+  const clicked = displayedDetectorResult(args) === true;
   let { x, y } = args.rect.center();
   x -= r * 0.5;
   x += 0.5;
@@ -270,21 +274,24 @@ function drawWedge(args, axis) {
  * @param {undefined|!string} axis
  */
 function drawClick(args) {
-  // The word, small and upright above the tile, in the gap over the wire: the lit wedge says it,
-  // and this names it for whoever has not met a detector yet.
-  if (!args.customStats) {
-    return;
-  }
-  fitText(args.painter, "click", {
-    x: args.rect.center().x,
-    y: args.rect.y - 3,
-    align: "center",
-    baseline: "bottom",
-    fill: CanvasTheme.probability.outline,
-    font: { fontSize: 11, fontFamily: Typography.DEFAULT_FONT_FAMILY },
-    width: Math.max(args.rect.w, 40),
-    height: 14,
-  });
+  if (args.positionInCircuit === undefined || args.gate.deactivated) return;
+  const result = displayedDetectorResult(args);
+  drawMeasurementCaption(
+    args,
+    !args.isReached
+      ? "not reached"
+      : result === undefined
+        ? "unavailable"
+        : result
+          ? "click"
+          : "no click",
+    {
+      fill:
+        result === true
+          ? CanvasTheme.probability.outline
+          : CanvasTheme.text.muted,
+    },
+  );
 }
 
 /**
@@ -348,6 +355,10 @@ function drawControlBulb(args, axis) {
 function drawDetectClearReset(args, axis) {
   const fullRect = args.rect;
   const detectorRect = fullRect.leftHalf();
+  detectorRect.h *= 0.6;
+  detectorRect.y += (fullRect.h - detectorRect.h) / 2;
+  detectorRect.w -= 2;
+  detectorRect.x -= 2;
   const resetRect = fullRect.rightHalf();
 
   // Draw background.
@@ -360,9 +371,15 @@ function drawDetectClearReset(args, axis) {
   drawHighlight(args);
 
   // Draw text elements.
-  fitLine(args.painter, "|0⟩", resetRect, {
-    horizontal: 1,
-    vertical: 0.5,
+  fitText(args.painter, "|0⟩", {
+    x: resetRect.right() + 3,
+    y: resetRect.center().y,
+    align: "right",
+    baseline: "middle",
+    fill: CanvasTheme.text.primary,
+    font: { fontSize: 12, fontFamily: Typography.DEFAULT_FONT_FAMILY },
+    width: resetRect.w - 3,
+    height: resetRect.h,
   });
 
   // Draw detector.
@@ -371,10 +388,8 @@ function drawDetectClearReset(args, axis) {
 
   args.rect = fullRect;
   drawControlBulb(args, axis);
-  args.rect = detectorRect;
   drawClick(args);
-
-  args.rect = fullRect;
+  drawMeasurementCaption(args, "reset |0⟩", { below: true });
 }
 
 /**

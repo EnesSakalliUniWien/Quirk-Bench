@@ -18,6 +18,7 @@ import { Suite, assertThat } from "../../TestUtil.js";
 import { Complex } from "../../../src/engine/math/complex/Complex.js";
 import { Matrix } from "../../../src/engine/math/matrix/Matrix.js";
 import { Rect } from "../../../src/geometry/Rect.js";
+import { Point } from "../../../src/geometry/Point.js";
 import { DisplayView } from "../scene/TestDisplayView.js";
 import { LabelView } from "../../../src/draw/text/LabelView.js";
 import { Registers } from "../../../src/circuit/model/Registers.js";
@@ -29,6 +30,45 @@ import { CanvasTheme } from "../../../src/config/CanvasTheme.js";
 import { Color } from "pixi.js";
 
 const suite = new Suite("dataRenderers");
+
+suite.test("state tooltips leave zero and nonfinite phases undefined", () => {
+  for (const [value, expected] of [
+    [Complex.ZERO, "mag²:0.0000%, phase:Undefined"],
+    [new Complex(0, 0.5), "mag²:25.0000%, phase:+90.00°"],
+    [new Complex(NaN, 0), "mag²:NaN%, phase:Undefined"],
+    [new Complex(Infinity, 0), "mag²:Infinity%, phase:Undefined"],
+  ]) {
+    const view = new DisplayView(document.createElement("canvas"));
+    DATA_RENDERERS.state(
+      view,
+      Matrix.fromRows([[value, 0]]),
+      new Rect(0, 0, 100, 50),
+      {
+        wireCount: 1,
+        focusPoints: [new Point(25, 25)],
+      },
+    );
+    assertThat(view.tooltips.pending[0].content.valueText2).isEqualTo(expected);
+  }
+});
+
+suite.test("incoherent state tooltips report probability without phase", () => {
+  const view = new DisplayView(document.createElement("canvas"));
+  DATA_RENDERERS.state(
+    view,
+    Matrix.fromRows([[0.5, 0]]),
+    new Rect(0, 0, 100, 50),
+    {
+      wireCount: 1,
+      coherent: false,
+      indicatorAlpha: 0,
+      focusPoints: [new Point(25, 25)],
+    },
+  );
+  const { valueText, valueText2 } = view.tooltips.pending[0].content;
+  assertThat(valueText).isEqualTo("raw: 25.0000%, log: -6.0 dB");
+  assertThat(valueText2).isEqualTo("[entangled with other qubits]");
+});
 
 suite.test(
   "a state's cells carry their basis states, in the registers' words, where they fit",

@@ -93,6 +93,7 @@ function ToolbarButton({
   label,
   tooltip = label,
   className = /** @type {string | undefined} */ (undefined),
+  variant = /** @type {"ghost" | "danger"} */ ("ghost"),
   disabled = false,
   onClick,
   current = false,
@@ -101,6 +102,7 @@ function ToolbarButton({
     <Button
       id={id}
       size="icon"
+      variant={variant}
       className={className}
       aria-label={label}
       data-current={current || undefined}
@@ -536,6 +538,7 @@ function AppToolbar() {
         id="clear-all-button"
         icon={Trash2Icon}
         label="Clear all"
+        variant="danger"
         className="app-toolbar-danger"
         disabled={!availability.canClearAll}
         onClick={() => circuitActions.clearAll()}

@@ -26,6 +26,26 @@ host. Recording controls live in `tape/` and are also used by the transport bar.
 
 Shared matrix renderers remain in `src/components/math/`, shared gate details in
 `src/components/gate/`, and toolbox components in `src/components/toolbox/`.
+The shared Bloch analyzer is `src/components/math/bloch-analysis.jsx`: pass
+physical states through `BlochAnalysis`, or a single-qubit operator through
+`OperationBlochAnalysis`. Both reuse the Bloch window's figures, projections,
+layers, axis controls and readouts through `useBlochView.js`. Embedded instances
+use unique IDs and mount their render surfaces only while expanded. Keep joint
+state matrices and distributions alongside the selected-qubit reduced state.
+Physical per-qubit readings come from `qubitReadings` in
+`src/engine/simulation/qubitMarginals.js`, including display-column controls and
+deferred measurement. Step and preparation vectors use `qubitMarginals` from
+the same module. Both feed the shared analyzer directly as `{wire, bloch}`
+readings; panels pass register metadata for labels rather than rebuilding it.
+Amplitude displays request these densities for every covered wire, because an
+entangled span's ket does not determine its wires' states. Density displays do
+not: `displayData.js` reads each wire from the display's own matrix with
+`densityQubits` in `src/engine/math/blochAnalysis.js`, and the single-wire
+Density display requests its own density for its renderer.
+Saved takes use `src/results/take/bloch.js`; exploratory operators use
+`src/engine/math/blochAnalysis.js`. Do not reconstruct coherence from probabilities
+or sample counts. The readout quaternion describes a state direction, not the
+operator's rotation or global phase.
 Simulation and saved-result logic remain in their existing engine and results
 directories. Panel styles live in `src/styles/panels/`, with shared panel rules in its `shared/` directory.
 

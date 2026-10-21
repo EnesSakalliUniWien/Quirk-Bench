@@ -128,6 +128,7 @@ function drawGate_deactivated(painter, gateRect) {
  * @param {!CircuitStats} stats
  */
 function drawColumnSurvivalRate(context, painter, gateColumn, col, stats) {
+  if (context.playheadStep !== undefined && col >= context.playheadStep) return;
   if (gateColumn.indexOfNonUnitaryGate() === undefined) {
     return;
   }

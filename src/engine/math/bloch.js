@@ -58,6 +58,7 @@ function blochCoordinates(densityMatrix) {
  *     phi: (undefined|!number),
  *     rule: ("mixed"|"polar"|"general"),
  *     purity: !number,
+ *     isPure: !boolean,
  * }} BlochReading
  * theta is the polar angle from |0⟩, in [0, π], and phi the azimuth from |+⟩ toward |+i⟩, in
  * [0, 2π), both in radians; either is undefined where the vector cannot give it. purity is
@@ -87,7 +88,15 @@ function blochReading(vec) {
     rule === "general"
       ? (Math.atan2(vec.y, vec.x) + 2 * Math.PI) % (2 * Math.PI)
       : undefined;
-  return { r, rxy, theta, phi, rule, purity: (1 + r * r) / 2 };
+  return {
+    r,
+    rxy,
+    theta,
+    phi,
+    rule,
+    purity: (1 + r * r) / 2,
+    isPure: r > PURE_STATE_THRESHOLD,
+  };
 }
 
 /**
@@ -214,9 +223,6 @@ function pureStateText(theta, phi) {
   return `${a.toFixed(3)} |0⟩ + (${signed(br)}${signed(bi)}i) |1⟩`;
 }
 
-/** Above this length the state is pure, and its components need no |r| in front of them. */
-const PURE_STATE_LENGTH = 0.999;
-
 /**
  * How each component reads off the angles: x and y run out with sin θ and divide by the azimuth,
  * z stands up with cos θ, and a shorter vector scales all three. A formula exists only where its
@@ -229,7 +235,7 @@ function componentFormulas(reading) {
   if (reading.rule === "mixed") {
     return { x: undefined, y: undefined, z: undefined, radial: undefined };
   }
-  const scale = reading.r > PURE_STATE_LENGTH ? "" : "|r| ";
+  const scale = reading.isPure ? "" : "|r| ";
   const azimuth = reading.rule === "general";
   return {
     x: azimuth ? `${scale}sin θ cos ϕ` : undefined,
@@ -247,8 +253,7 @@ function componentFormulas(reading) {
  * @returns {!{alpha: (undefined|!number), beta: (undefined|!Complex)}}
  */
 function blochAmplitudes(reading) {
-  if (reading.r <= PURE_STATE_LENGTH)
-    return { alpha: undefined, beta: undefined };
+  if (!reading.isPure) return { alpha: undefined, beta: undefined };
   const alpha = Math.cos(reading.theta / 2);
   const beta = Complex.polar(Math.sin(reading.theta / 2), reading.phi ?? 0);
   return { alpha, beta };
@@ -320,6 +325,7 @@ function analyzerReadout(vec, reading = blochReading(vec)) {
     radians === undefined ? UNDEFINED_TEXT : `${(radians * 180) / Math.PI}°`;
   return {
     rule: reading.rule,
+    isPure: reading.isPure,
     note:
       reading.rule === "mixed"
         ? MIXED_NOTE

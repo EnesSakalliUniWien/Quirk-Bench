@@ -28,7 +28,9 @@
   }
 
   .parameter-targets > button {
-    min-height: 36px;
+    height: auto;
+    padding-block: 5px;
+    justify-content: flex-start;
     white-space: normal;
     overflow-wrap: anywhere;
     text-align: start;
@@ -69,6 +71,60 @@
   .amplitudes-editor-ket {
     font-family: var(--font-mono);
     font-size: 0.8125rem;
+  }
+
+  .amplitudes-editor-entry .field-error,
+  .amplitudes-editor-entry .field-description {
+    margin: 4px 0 0;
+    overflow-wrap: anywhere;
+  }
+
+  .amplitudes-editor input[aria-invalid="true"] {
+    border-color: var(--destructive);
+  }
+
+  .amplitudes-preview {
+    margin: 12px 0;
+  }
+
+  .amplitudes-preview h3 {
+    margin: 0 0 6px;
+    font-size: 0.8125rem;
+  }
+
+  .amplitudes-result {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr));
+    gap: 4px 12px;
+    padding: 0;
+    list-style: none;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    overflow-wrap: anywhere;
+  }
+
+  .amplitudes-paste {
+    margin: 12px 0;
+    font-size: 0.8125rem;
+  }
+
+  .amplitudes-paste summary {
+    min-height: 32px;
+    cursor: pointer;
+  }
+
+  .amplitudes-paste label {
+    display: block;
+    margin: 8px 0;
+  }
+
+  .amplitudes-paste textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-height: 90px;
+    resize: vertical;
+    padding: 8px;
+    font-family: var(--font-mono);
   }
 
   .gate-param-error {

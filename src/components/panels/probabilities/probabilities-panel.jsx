@@ -1,5 +1,7 @@
+import { BlochAnalysis } from "../../math/bloch-analysis.jsx";
+import { qubitMarginals } from "../../../engine/simulation/qubitMarginals.js";
 import { Tabs } from "@base-ui/react/tabs";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useStore } from "zustand";
 
 import {
@@ -256,6 +258,8 @@ function ProbabilitiesPanel() {
     const states = stepStates(fullStats, wireCount, undefined, prefix);
     return {
       stops,
+      states: stops.map(({ column }) => states[column]),
+      circuit,
       wireCount,
       registers: circuit.registers,
       steps: stops.map(({ column }) => probabilitiesOf(states[column])),
@@ -272,6 +276,23 @@ function ProbabilitiesPanel() {
             history.registers,
           ),
     [history, layout],
+  );
+
+  const getBlochStates = useCallback(
+    () =>
+      history.stops.map((stop, index) => ({
+        label:
+          stop.column === 0
+            ? "Before the first column"
+            : `After column ${stop.column}`,
+        registers: history.registers,
+        qubits: qubitMarginals(
+          history.states[index],
+          history.wireCount,
+          history.circuit.colIsMeasuredMask(stop.column),
+        ),
+      })),
+    [history],
   );
 
   if (history === undefined) {
@@ -308,6 +329,8 @@ function ProbabilitiesPanel() {
               key={value}
               value={value}
               id={`probabilities-layout-${value}`}
+              className="ui-button"
+              data-variant="outline"
             >
               {label}
             </Tabs.Tab>
@@ -332,6 +355,7 @@ function ProbabilitiesPanel() {
           </Tabs.Panel>
         ))}
       </Tabs.Root>
+      <BlochAnalysis getStates={getBlochStates} />
       <p className="debug-panel-note">
         {current < stops.length - 1
           ? `Step ${current} of ${stops.length - 1}: each later step fills in when the playhead reaches it. `

@@ -197,6 +197,30 @@ suite.test(
     );
 
     const psi = PrepareGates.AmplitudesFamily.ofSize(1);
+    assertThat(psi.paramDialog.editor).isEqualTo("amplitudes");
+    for (const text of ["1+, 0", "1/, 0", "1^, 0", "(1+), 0"])
+      assertThat(typeof psi.paramDialog.applyText(psi, text).error).isEqualTo(
+        "string",
+      );
+    for (const text of ["1e200, 1e200", "1e-200, 1e-200", "1e308, 1e308"])
+      assertThat(
+        psi.paramDialog.applyText(psi, text).gate.param,
+      ).isApproximatelyEqualTo(
+        [
+          [s, 0],
+          [s, 0],
+        ],
+        1e-9,
+      );
+    assertThat(
+      psi.paramDialog.applyText(psi, "1e308+1e308i, 1e308+1e308i").gate.param,
+    ).isApproximatelyEqualTo(
+      [
+        [0.5, 0.5],
+        [0.5, 0.5],
+      ],
+      1e-9,
+    );
     assertThat(
       psi.paramDialog.applyText(psi, "1, i").gate.param,
     ).isApproximatelyEqualTo(

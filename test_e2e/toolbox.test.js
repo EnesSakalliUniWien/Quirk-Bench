@@ -202,7 +202,8 @@ test("searches the toolbox, previews on hover, and opens accessible gate details
         (e) => e.textContent,
       ),
       axis: element.querySelector(".gate-details-facts dd")?.textContent,
-      hasFigure: element.querySelector(".rotation-figure") !== null,
+      hasFigure:
+        element.querySelector(".shared-bloch-analysis > summary") !== null,
     }));
     assert.equal(card.title, "Hadamard Gate");
     assert.equal(
@@ -223,7 +224,18 @@ test("searches the toolbox, previews on hover, and opens accessible gate details
     ]);
     assert.ok(
       card.hasFigure,
-      "A one-qubit gate must show the turn it performs.",
+      "A one-qubit gate must offer interactive Bloch analysis.",
+    );
+    await page.click(".gate-details-popup .shared-bloch-analysis > summary");
+    await page.waitForSelector(
+      ".gate-details-popup .shared-bloch-analysis canvas",
+    );
+    assert.equal(
+      await page.$$eval(
+        ".gate-details-popup .shared-bloch-analysis canvas",
+        (canvases) => canvases.length,
+      ),
+      3,
     );
     assert.ok(
       card.axis.startsWith("180°"),
@@ -372,6 +384,12 @@ test("the palette, its gate cards and their figures follow the browser text size
           visible: true,
           timeout: TEST_TIMEOUT_MILLIS,
         });
+        await page.click(
+          ".gate-details-popup .shared-bloch-analysis > summary",
+        );
+        await page.waitForSelector(
+          ".gate-details-popup .shared-bloch-analysis canvas",
+        );
         const details = await page.$eval(".gate-details-popup", (popup) => {
           const size = (selector) =>
             getComputedStyle(popup.querySelector(selector)).fontSize;
@@ -383,9 +401,8 @@ test("the palette, its gate cards and their figures follow the browser text size
             action: size(".gate-details-actions li"),
             facts: size(".gate-details-facts"),
             width: popup.getBoundingClientRect().width,
-            figure: popup
-              .querySelector(".rotation-figure")
-              .getBoundingClientRect().width,
+            figure: popup.querySelectorAll(".shared-bloch-analysis canvas")
+              .length,
           };
         });
         return { hover, details };
@@ -519,7 +536,7 @@ test("the palette, its gate cards and their figures follow the browser text size
           action: "14px",
           facts: "13px",
           width: 440,
-          figure: 148,
+          figure: 3,
         },
       });
       const usualCircuit = await circuitFigure();
@@ -558,7 +575,7 @@ test("the palette, its gate cards and their figures follow the browser text size
           action: "28px",
           facts: "26px",
           width: 880,
-          figure: 296,
+          figure: 3,
         },
       });
       // The circuit figure doubles, and so does the drawing on it. The drawing is shrunk to fit its

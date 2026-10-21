@@ -126,7 +126,7 @@ const makeSetInputGate = (key) =>
         if (text.trim() === "") {
           return { gate: oldGate };
         }
-        const val = parseInt(text);
+        const val = Number(text.trim());
         if (!Number.isInteger(val) || val < 0 || val >= 1 << 16) {
           return { error: `'${text}' isn't an integer between 0 and 65535.` };
         }
